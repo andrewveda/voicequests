@@ -2,152 +2,163 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>🎤 Free Speaking Grammar Check - Strict ESL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive SOP Interview Trainer</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    margin: 0; padding: 20px;
-  }
-  h1 { text-align: center; }
-  button {
-    background: #0077cc; color: white;
-    border: none; padding: 10px 20px;
-    border-radius: 5px; cursor: pointer;
-    font-size: 16px;
-  }
-  .transcript {
-    margin-top: 15px;
-    font-style: italic;
+    background: #f7f6f2;
     color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
   }
-  .feedback {
-    margin-top: 10px;
-    color: red;
+  .container {
+    max-width: 700px;
+    width: 100%;
+    background: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   }
-  .success { color: green; }
+  h1 {
+    text-align: center;
+    color: #1e3a8a;
+  }
+  #interviewer {
+    margin: 20px 0;
+    font-weight: bold;
+    color: #111827;
+  }
+  #student-response {
+    margin: 10px 0;
+    font-style: italic;
+    color: #065f46;
+  }
+  #feedback {
+    margin: 10px 0;
+    color: #b91c1c;
+  }
+  button {
+    padding: 10px 20px;
+    margin-top: 15px;
+    background: #1e40af;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #2563eb;
+  }
+  #progress {
+    width: 100%;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  #progress-bar {
+    height: 20px;
+    width: 0%;
+    background: #10b981;
+    border-radius: 10px;
+    transition: width 0.3s;
+  }
 </style>
 </head>
 <body>
-<h1>🎤 Free Speaking Practice - Strict ESL</h1>
-<p style="text-align:center;">Speak freely. All grammar errors will be flagged. Punctuation is ignored.</p>
-
-<div style="text-align:center;">
-  <button id="startBtn">🎙 Start Speaking</button>
+<div class="container">
+  <h1>BE Cybersecurity Interview Trainer</h1>
+  <div id="interviewer">Click Start to begin the interview.</div>
+  <div id="student-response"></div>
+  <div id="feedback"></div>
+  <button id="startBtn">Start Interview</button>
+  <div id="progress">
+    <div id="progress-bar"></div>
+  </div>
 </div>
 
-<div class="transcript" id="transcript"></div>
-<div class="feedback" id="feedback"></div>
-
 <script>
-let recognition;
+const questions = [
+  { q: "Good morning! Welcome to this mini-interview. Can you please introduce yourself?", a: "Name, year, program, college, passion for cybersecurity" },
+  { q: "What inspired you to pursue Cybersecurity?", a: "Interest in technology and digital security, problem-solving" },
+  { q: "Did you have any experiences in school that prepared you for this?", a: "Coding competitions, workshops, online learning" },
+  { q: "What are your main goals for your college life?", a: "Focus on core subjects, labs, workshops, hackathons" },
+  { q: "How do you plan to develop teamwork and leadership skills?", a: "Group projects, mentoring peers, collaboration" },
+  { q: "Do you have hobbies or activities outside academics?", a: "Reading, chess, volunteering" },
+  { q: "How will you gain hands-on experience in cybersecurity?", a: "Labs, projects, online certifications, CTF challenges" },
+  { q: "What do you hope to achieve by the end of your BE program?", a: "Technical mastery, portfolio, communication, ethical skills" },
+  { q: "Thank you for sharing your goals and plans. Any closing thoughts?", a: "Enthusiasm for learning, gratitude, commitment" }
+];
 
-// Normalize transcript: capitalize "I" and sentence start
-function normalizeTranscript(text) {
-  text = text.replace(/\bi\b/g, "I"); // capital I
-  text = text.charAt(0).toUpperCase() + text.slice(1);
-  return text;
+let currentIndex = 0;
+const interviewerEl = document.getElementById('interviewer');
+const studentEl = document.getElementById('student-response');
+const feedbackEl = document.getElementById('feedback');
+const startBtn = document.getElementById('startBtn');
+const progressBar = document.getElementById('progress-bar');
+
+let recognition;
+if('webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-GB';
+  recognition.interimResults = false;
+  recognition.continuous = false;
+
+  recognition.onresult = function(event){
+    const transcript = event.results[0][0].transcript;
+    studentEl.textContent = transcript;
+    feedbackEl.textContent = "Response recorded!";
+    setTimeout(()=>{ nextQuestion(); }, 1000);
+  }
+
+  recognition.onerror = function(event){
+    feedbackEl.textContent = "Error occurred: " + event.error;
+  }
+} else {
+  feedbackEl.textContent = "Speech Recognition not supported in this browser.";
 }
 
-// LanguageTool API grammar check, ignoring punctuation
-async function checkGrammar(text) {
-  try {
-    const response = await fetch("https://api.languagetool.org/v2/check", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `language=en-GB&text=${encodeURIComponent(text)}`
-    });
-    const data = await response.json();
-    // Filter out punctuation suggestions
-    const filtered = data.matches.filter(m => m.rule.category.id !== "PUNCTUATION");
-    return filtered.map(m => ({
-      message: m.message,
-      replacements: m.replacements.map(r => r.value)
-    }));
-  } catch (err) {
-    console.error("Grammar API error:", err);
-    return [{ message: "Grammar check failed. Try again.", replacements: [] }];
+function speak(text){
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-GB';
+  utter.rate = 0.9;
+  utter.pitch = 1;
+  speechSynthesis.speak(utter);
+}
+
+function nextQuestion(){
+  if(currentIndex < questions.length){
+    interviewerEl.textContent = questions[currentIndex].q;
+    speak(questions[currentIndex].q);
+    studentEl.textContent = "";
+    feedbackEl.textContent = "Please speak your response...";
+    currentIndex++;
+    progressBar.style.width = ((currentIndex / questions.length) * 100) + "%";
+  } else {
+    interviewerEl.textContent = "Interview complete! Well done.";
+    studentEl.textContent = "";
+    feedbackEl.textContent = "You have completed all steps!";
+    startBtn.style.display = "block";
   }
 }
 
-// Custom ESL grammar rules
-function customESLChecks(text) {
-  const mistakes = [];
-
-  // Continuous tense
-  if(/\bI\s+\w+ing\b/i.test(text) && !/\bI\s+am\s+\w+ing\b/i.test(text)) 
-    mistakes.push({message:'Use "I am ..." for continuous tense', replacements:[]});
-  if(/\b(He|She)\s+\w+ing\b/i.test(text) && !/\b(He|She)\s+is\s+\w+ing\b/i.test(text)) 
-    mistakes.push({message:'Use "He/She is ..." for continuous tense', replacements:[]});
-  if(/\bThey\s+\w+ing\b/i.test(text) && !/\bThey\s+are\s+\w+ing\b/i.test(text)) 
-    mistakes.push({message:'Use "They are ..." for continuous tense', replacements:[]});
-
-  // Plurals
-  if(/\benjoy reading book\b/i.test(text)) mistakes.push({message:'Plural missing: "books"', replacements:['books']});
-  if(/\bMy hobbies is reading book\b/i.test(text)) mistakes.push({message:'Plural missing: "books" and verb agreement', replacements:['My hobbies are reading books']});
-
-  // Subject-Verb Agreement
-  if(/\bHe go\b/i.test(text)) mistakes.push({message:'Use "He goes" for third-person singular', replacements:['goes']});
-  if(/\bShe like\b/i.test(text)) mistakes.push({message:'Use "She likes" for third-person singular', replacements:['likes']});
-  if(/\bThey goes\b/i.test(text)) mistakes.push({message:'Use "They go" for plural subjects', replacements:['go']});
-
-  // Articles
-  if(/\bI am \w+ student\b/i.test(text)) mistakes.push({message:'Missing article: "a" before "student"', replacements:['a']});
-  if(/\bI have \w+ idea\b/i.test(text)) mistakes.push({message:'Missing article: "an" before "idea"', replacements:['an']});
-
-  // Prepositions
-  if(/\bI am good in\b/i.test(text)) mistakes.push({message:'Incorrect preposition: use "good at"', replacements:[]});
-  if(/\bgo school\b/i.test(text)) mistakes.push({message:'Missing preposition "to": "go to school"', replacements:['to school']});
-  if(/\bI speaking you\b/i.test(text)) mistakes.push({message:'Incorrect continuous: use "I am speaking to you"', replacements:['I am speaking to you']});
-
-  // Common ESL phrases
-  if(/\bMy hobbies is\b/i.test(text)) mistakes.push({message:'Use "are" for plural subject', replacements:['are']});
-  if(/\bThere is \d+ members\b/i.test(text)) mistakes.push({message:'Use "are" with plural', replacements:['are']});
-  if(/\benjoy play\b/i.test(text)) mistakes.push({message:'Use verb+ing after enjoy', replacements:[]});
-
-  return mistakes;
-}
-
-// Initialize SpeechRecognition
-function initRecognition() {
-  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-  recognition.lang = "en-GB";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.onresult = async function(event) {
-    let spoken = event.results[0][0].transcript;
-    spoken = normalizeTranscript(spoken);
-    document.getElementById("transcript").textContent = `You said: "${spoken}"`;
-
-    const ltCorrections = await checkGrammar(spoken);
-    const customCorrections = customESLChecks(spoken);
-    const allCorrections = [...ltCorrections, ...customCorrections];
-
-    const feedbackDiv = document.getElementById("feedback");
-    if(allCorrections.length === 0) {
-      feedbackDiv.textContent = "✅ Perfect! No grammar errors detected.";
-      feedbackDiv.className = "feedback success";
-    } else {
-      let msg = "";
-      allCorrections.forEach(c => {
-        msg += `❌ ${c.message} Suggestion: ${c.replacements.join(", ")}\n`;
-      });
-      feedbackDiv.textContent = msg;
-      feedbackDiv.className = "feedback";
-    }
-  };
-
-  recognition.onerror = function(event) {
-    alert("Recognition error: " + event.error);
-  };
-}
-
-// Button click
-document.getElementById("startBtn").addEventListener("click", () => {
-  if (!recognition) initRecognition();
-  recognition.start();
+startBtn.addEventListener('click', ()=>{
+  startBtn.style.display = "none";
+  currentIndex = 0;
+  nextQuestion();
+  if(recognition) recognition.start();
 });
+
+// Restart recognition after each response
+if(recognition){
+  recognition.onend = function(){
+    if(currentIndex <= questions.length) recognition.start();
+  }
+}
 </script>
 </body>
 </html>
