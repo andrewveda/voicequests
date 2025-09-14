@@ -30,8 +30,27 @@
       "I am practising English speaking."
     ];
 
-    let currentIndex = 0;
+    // contraction + spelling equivalences
+    const equivalences = {
+      "i'm": "i am",
+      "practicing": "practising",
+      "color": "colour",
+      "organize": "organise",
+      "realize": "realise"
+    };
 
+    function normalize(s) {
+      return s.toLowerCase()
+        .replace(/[.,!?;:()"]/g,'')  // strip punctuation
+        .replace(/\s+/g,' ')         // collapse spaces
+        .trim();
+    }
+
+    function applyEquivalences(text) {
+      return text.split(/\s+/).map(w => equivalences[w] || w).join(" ");
+    }
+
+    // render dialogues
     const container = document.getElementById("dialogues");
     lines.forEach((line, index) => {
       const div = document.createElement("div");
@@ -49,13 +68,14 @@
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-GB";
     recognition.interimResults = false;
+    recognition.maxAlternatives = 3;
 
     function playLine(index) {
       const utterance = new SpeechSynthesisUtterance(lines[index]);
-      // pick a British voice if available
       const voices = speechSynthesis.getVoices();
       const ukVoice = voices.find(v => v.lang === "en-GB") || voices[0];
       utterance.voice = ukVoice;
+      utterance.lang = "en-GB";
       speechSynthesis.speak(utterance);
     }
 
@@ -68,12 +88,14 @@
     }
 
     function checkAnswer(index, spoken) {
-      const expected = normalise(lines[index]);
-      const got = normalise(spoken);
+      const expected = normalize(lines[index]);
+      const got = normalize(spoken);
+      const adjusted = applyEquivalences(got);
+
       const feedback = document.getElementById(`feedback-${index}`);
 
-      if (expected === got) {
-        feedback.textContent = `✅ Perfect match. You said: "${spoken}"`;
+      if (expected === adjusted) {
+        feedback.textContent = `✅ Accepted. You said: "${spoken}"`;
         feedback.className = "feedback success";
         const next = document.querySelectorAll(".dialogue")[index+1];
         if (next) {
@@ -81,13 +103,9 @@
           next.classList.add("active");
         }
       } else {
-        feedback.textContent = `❌ Incorrect. Expected: "${lines[index]}" but you said: "${spoken}"`;
+        feedback.textContent = `❌ Not accepted. Expected: "${lines[index]}", but heard: "${spoken}"`;
         feedback.className = "feedback fail";
       }
-    }
-
-    function normalise(text) {
-      return text.toLowerCase().replace(/[.,!?]/g,"").trim();
     }
   </script>
 </body>
