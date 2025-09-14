@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🎤 Self-Introduction Practice</title>
+  <title>🎤 Self-Introduction Practice with Grammar Check</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,16 +57,13 @@
     ];
 
     const container = document.getElementById("exercise");
-
     let currentIndex = 0;
 
+    // render dialogue steps
     lines.forEach((line, i) => {
       const div = document.createElement("div");
       div.className = "dialogue locked";
-      if (i === 0) {
-        div.classList.add("active");
-        div.classList.remove("locked"); // ✅ first step unlocked
-      }
+      if (i === 0) { div.classList.add("active"); div.classList.remove("locked"); }
       div.innerHTML = `
         <strong>Step ${i+1}:</strong> ${line}<br>
         <button onclick="startRecognition(${i})">🎙 Speak</button>
@@ -76,7 +73,7 @@
       container.appendChild(div);
     });
 
-    // Mobile-friendly SpeechRecognition setup
+    // SpeechRecognition
     let recognition;
     function initRecognition() {
       recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -84,30 +81,30 @@
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
-      recognition.onresult = function(event) {
+      recognition.onresult = async function(event) {
         const spoken = event.results[0][0].transcript;
         const transcriptDiv = document.getElementById(`transcript-${currentIndex}`);
         transcriptDiv.textContent = `You said: "${spoken}"`;
 
-        const feedback = document.getElementById(`feedback-${currentIndex}`);
-        const correction = grammarCheck(spoken, lines[currentIndex]);
+        const feedbackDiv = document.getElementById(`feedback-${currentIndex}`);
 
-        if (correction === null) {
-          feedback.textContent = "✅ Correct!";
-          feedback.className = "feedback success";
+        const corrections = await checkGrammar(spoken);
+        if (corrections.length === 0) {
+          feedbackDiv.textContent = "✅ Correct!";
+          feedbackDiv.className = "feedback success";
           unlockNext();
         } else {
-          feedback.innerHTML = `❌ ${correction}`;
-          feedback.className = "feedback fail";
+          let msg = "";
+          corrections.forEach(c => {
+            msg += `❌ ${c.message} Suggestion: ${c.replacements.join(", ")}<br>`;
+          });
+          feedbackDiv.innerHTML = msg;
+          feedbackDiv.className = "feedback fail";
         }
       };
 
       recognition.onerror = function(event) {
         alert("Recognition error: " + event.error);
-      };
-
-      recognition.onend = function() {
-        // ready for next recognition
       };
     }
 
@@ -126,31 +123,24 @@
       }
     }
 
-    // Basic rule-based grammar check
-    function grammarCheck(sentence, expected) {
-      const s = sentence.trim();
-
-      // Capitalisation of 'I'
-      if (/\bi\b/.test(s)) {
-        return "Always capitalise 'I'.";
+    // LanguageTool grammar check via public API
+    async function checkGrammar(text) {
+      try {
+        const response = await fetch("https://api.languagetool.org/v2/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `language=en-GB&text=${encodeURIComponent(text)}`
+        });
+        const data = await response.json();
+        // map matches to simplified format
+        return data.matches.map(m => ({
+          message: m.message,
+          replacements: m.replacements.map(r => r.value)
+        }));
+      } catch (err) {
+        console.error("Grammar API error:", err);
+        return [{ message: "Grammar check failed. Try again.", replacements: [] }];
       }
-
-      // Specific rules per expected template
-      if (expected.startsWith("My name is")) {
-        if (!/my name is/i.test(s)) return "You must begin with 'My name is ...'.";
-        if (s.split(" ").length < 4) return "Incomplete. Say your full name.";
-      }
-      if (expected.startsWith("I come from")) {
-        if (!/i come from/i.test(s)) return "You must say 'I come from ...'.";
-      }
-      if (expected.startsWith("There are")) {
-        if (!/there are/i.test(s)) return "Use 'There are ... members in my family'.";
-      }
-      if (/hobbies is/i.test(s)) {
-        return "Use 'My hobbies are ...', not 'is'.";
-      }
-
-      return null; // passes all rules
     }
 
     initRecognition();
