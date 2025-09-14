@@ -37,12 +37,11 @@
 </head>
 <body>
   <h1>🎤 Self-Introduction Practice</h1>
-  <p style="text-align:center;">Speak each part aloud. The system will check your grammar. Only correct sentences unlock the next step.</p>
+  <p style="text-align:center;">Speak each part aloud. Grammar mistakes will be highlighted. Only correct sentences unlock the next step.</p>
 
   <div id="exercise"></div>
 
   <script>
-    // Steps of self-introduction
     const lines = [
       "Good morning everyone.",
       "My name is [Your Name].",
@@ -58,10 +57,16 @@
     ];
 
     const container = document.getElementById("exercise");
+
+    let currentIndex = 0;
+
     lines.forEach((line, i) => {
       const div = document.createElement("div");
       div.className = "dialogue locked";
-      if (i === 0) div.classList.add("active");
+      if (i === 0) {
+        div.classList.add("active");
+        div.classList.remove("locked"); // ✅ first step unlocked
+      }
       div.innerHTML = `
         <strong>Step ${i+1}:</strong> ${line}<br>
         <button onclick="startRecognition(${i})">🎙 Speak</button>
@@ -71,88 +76,84 @@
       container.appendChild(div);
     });
 
-    // Speech recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-GB";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    // Mobile-friendly SpeechRecognition setup
+    let recognition;
+    function initRecognition() {
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-GB";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
 
-    let currentIndex = 0;
+      recognition.onresult = function(event) {
+        const spoken = event.results[0][0].transcript;
+        const transcriptDiv = document.getElementById(`transcript-${currentIndex}`);
+        transcriptDiv.textContent = `You said: "${spoken}"`;
 
-    function startRecognition(i) {
-      if (i !== currentIndex) return; // only current step allowed
-      recognition.start();
-      document.getElementById(`transcript-${i}`).textContent = "🎤 Listening...";
+        const feedback = document.getElementById(`feedback-${currentIndex}`);
+        const correction = grammarCheck(spoken, lines[currentIndex]);
+
+        if (correction === null) {
+          feedback.textContent = "✅ Correct!";
+          feedback.className = "feedback success";
+          unlockNext();
+        } else {
+          feedback.innerHTML = `❌ ${correction}`;
+          feedback.className = "feedback fail";
+        }
+      };
+
+      recognition.onerror = function(event) {
+        alert("Recognition error: " + event.error);
+      };
+
+      recognition.onend = function() {
+        // ready for next recognition
+      };
     }
 
-    recognition.onresult = function(event) {
-      const spoken = event.results[0][0].transcript;
-      const transcriptDiv = document.getElementById(`transcript-${currentIndex}`);
-      transcriptDiv.textContent = `You said: "${spoken}"`;
+    function startRecognition(index) {
+      if (index !== currentIndex) return;
+      recognition.start();
+    }
 
-      const feedback = document.getElementById(`feedback-${currentIndex}`);
-      const correction = grammarCheck(spoken, lines[currentIndex]);
-
-      if (correction === null) {
-        feedback.textContent = "✅ Correct!";
-        feedback.className = "feedback success";
-        // unlock next
-        const all = document.querySelectorAll(".dialogue");
-        all[currentIndex].classList.remove("active");
-        currentIndex++;
-        if (all[currentIndex]) {
-          all[currentIndex].classList.remove("locked");
-          all[currentIndex].classList.add("active");
-        }
-      } else {
-        feedback.innerHTML = `❌ ${correction}`;
-        feedback.className = "feedback fail";
+    function unlockNext() {
+      const all = document.querySelectorAll(".dialogue");
+      all[currentIndex].classList.remove("active");
+      currentIndex++;
+      if (all[currentIndex]) {
+        all[currentIndex].classList.remove("locked");
+        all[currentIndex].classList.add("active");
       }
-    };
+    }
 
-    recognition.onerror = function(event) {
-      alert("Error: " + event.error);
-    };
-
-    // Basic grammar check function (rule-based)
+    // Basic rule-based grammar check
     function grammarCheck(sentence, expected) {
       const s = sentence.trim();
 
-      // Capitalisation of I
+      // Capitalisation of 'I'
       if (/\bi\b/.test(s)) {
         return "Always capitalise 'I'.";
       }
 
-      // Common intro rules
+      // Specific rules per expected template
       if (expected.startsWith("My name is")) {
-        if (!/my name is/i.test(s)) {
-          return "You must begin with 'My name is ...'.";
-        }
-        if (s.split(" ").length < 4) {
-          return "Incomplete. Please say your full name.";
-        }
+        if (!/my name is/i.test(s)) return "You must begin with 'My name is ...'.";
+        if (s.split(" ").length < 4) return "Incomplete. Say your full name.";
       }
-
       if (expected.startsWith("I come from")) {
-        if (!/i come from/i.test(s)) {
-          return "You must say 'I come from ...'.";
-        }
+        if (!/i come from/i.test(s)) return "You must say 'I come from ...'.";
       }
-
       if (expected.startsWith("There are")) {
-        if (!/there are/i.test(s)) {
-          return "Use 'There are ... members in my family'.";
-        }
+        if (!/there are/i.test(s)) return "Use 'There are ... members in my family'.";
       }
-
       if (/hobbies is/i.test(s)) {
         return "Use 'My hobbies are ...', not 'is'.";
       }
 
-      // If everything matches rules → accept
-      return null;
+      return null; // passes all rules
     }
+
+    initRecognition();
   </script>
 </body>
 </html>
