@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Repeat After Me — improved</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  button { padding: 10px 18px; font-size: 16px; border-radius: 8px; border: none; background: #4a90e2; color: white; margin: 6px; cursor: pointer; }
+  button:disabled { background: #999; cursor: not-allowed; }
+  #feedback { margin-top: 16px; font-size: 17px; font-weight: 600; min-height: 1.2em; }
+  #prompt { font-size: 18px; }
+  #debug { margin-top: 12px; font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+  <h2>Repeat After Me 🎤</h2>
+  <p id="prompt">Phrase: <b>The cat is on the mat.</b></p>
+  <button id="playBtn">🔊 Play Phrase</button>
+  <button id="speakBtn">🎙️ Speak</button>
+  <div id="feedback"></div>
+  <div id="debug" aria-hidden="true"></div>
+
+<script>
+(function () {
+  const targetPhrase = "the cat is on the mat";
+  const playBtn = document.getElementById('playBtn');
+  const speakBtn = document.getElementById('speakBtn');
+  const feedback = document.getElementById('feedback');
+  const debug = document.getElementById('debug');
+
+  // Speech synthesis (play the phrase)
+  playBtn.onclick = () => {
+    const u = new SpeechSynthesisUtterance(targetPhrase);
+    u.lang = 'en-GB';
+    speechSynthesis.speak(u);
+  };
+
+  // Feature detect (vendor prefixes)
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    feedback.textContent = "Speech recognition not supported in this browser. Use Chrome/Edge on desktop or Android.";
+    speakBtn.disabled = true;
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-GB';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.continuous = false;
+
+  // State helpers
+  let started = false;
+  let resultReceived = false;
+  let lastError = null;
+  let startFallbackTimer = null;
+
+  // Start listening
+  speakBtn.onclick = () => {
+    feedback.style.color = 'black';
+    feedback.textContent = 'Requesting microphone access...';
+    lastError = null;
+    resultReceived = false;
+
+    // Prevent double-start issues
+    try {
+      recognition.start();
+    } catch (e) {
+      console.error('recognition.start() error:', e);
+      feedback.textContent = 'Error starting recognition. Try again.';
+      return;
+    }
+
+    // If onstart hasn't fired within 700ms, show a friendly waiting message (permission prompt might be hidden)
+    clearTimeout(startFallbackTimer);
+    startFallbackTimer = setTimeout(() => {
+      if (!started && !lastError) {
+        feedback.textContent = '⚠️ Waiting for microphone permission. If you don\'t see a prompt, check the browser address bar or site settings.';
+        feedback.style.color = 'orange';
+      }
+    }, 700);
+  };
+
+  recognition.onstart = () => {
+    started = true;
+    clearTimeout(startFallbackTimer);
+    feedback.textContent = 'Listening...';
+    feedback.style.color = 'black';
+    speakBtn.disabled = true;
+    debug.textContent = 'onstart';
+  };
+
+  recognition.onresult = (event) => {
+    resultReceived = true;
+    const spoken = event.results[0][0].transcript.toLowerCase().trim();
+    debug.textContent = `onresult: "${spoken}" (confidence ${event.results[0][0].confidence})`;
+
+    // Simple forgiving matching: check exact or word-overlap >= 70%
+    const normalizedTarget = targetPhrase.toLowerCase().replace(/[^\w\s]/g,'').trim();
+    const normalizedSpoken = spoken.replace(/[^\w\s]/g,'').trim();
+
+    if (normalizedSpoken === normalizedTarget || wordMatchPercent(normalizedTarget, normalizedSpoken) >= 0.7) {
+      feedback.textContent = '✅ Correct! You repeated it well.';
+      feedback.style.color = 'green';
+    } else {
+      feedback.textContent = `❌ You said: "${spoken}". Try again!`;
+      feedback.style.color = 'red';
+    }
+  };
+
+  recognition.onerror = (event) => {
+    lastError = event.error || 'unknown';
+    console.warn('SpeechRecognition error:', event);
+    clearTimeout(startFallbackTimer);
+
+    const friendly = {
+      'not-allowed': 'Microphone permission denied. Please allow microphone access (check the browser prompt or site settings).',
+      'service-not-allowed': 'Microphone use blocked by browser or policy.',
+      'no-speech': 'No speech detected. Try speaking a bit louder and closer to the mic.',
+      'network': 'Network error during recognition.',
+      'aborted': 'Recognition aborted. Try again.'
+    };
+    const message = friendly[lastError] || ('Error: ' + lastError);
+
+    // If recognition had not really started yet, wait briefly — sometimes permission errors race with onstart.
+    if (!started) {
+      setTimeout(() => {
+        if (!started) {
+          feedback.textContent = '❌ ' + message;
+          feedback.style.color = 'red';
+          speakBtn.disabled = false;
+          debug.textContent = 'onerror (pre-start): ' + lastError;
+        }
+      }, 250);
+    } else {
+      feedback.textContent = '❌ ' + message;
+      feedback.style.color = 'red';
+      speakBtn.disabled = false;
+      debug.textContent = 'onerror: ' + lastError;
+    }
+  };
+
+  recognition.onend = () => {
+    started = false;
+    speakBtn.disabled = false;
+    clearTimeout(startFallbackTimer);
+    // If we ended without an error or result, prompt user gently
+    if (!resultReceived && !lastError) {
+      feedback.textContent = 'Finished listening. Click Speak to try again.';
+      feedback.style.color = 'black';
+      debug.textContent = 'onend (no result)';
+    } else {
+      debug.textContent = 'onend';
+    }
+  };
+
+  // helper: percent of target words present in user speech
+  function wordMatchPercent(target, spoken) {
+    const tw = target.split(/\s+/).filter(Boolean);
+    const sw = spoken.split(/\s+/).filter(Boolean);
+    if (tw.length === 0) return 0;
+    const setSpoken = new Set(sw);
+    let match = 0;
+    for (const w of tw) {
+      if (setSpoken.has(w)) match++;
+    }
+    return match / tw.length; // e.g., 0.75 if 3/4 words matched
+  }
+})();
+</script>
+</body>
+</html>
