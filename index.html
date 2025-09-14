@@ -2,110 +2,156 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Strict Dialogue Repetition Trainer</title>
+  <title>🎤 Self-Introduction Practice</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    .dialogue { margin: 15px 0; padding: 15px; background: white;
-      border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none; }
-    .active { display: block; }
-    button { margin-top: 10px; padding: 10px 15px; border: none;
-      background: #333; color: white; border-radius: 5px; cursor: pointer; }
-    .locked { opacity: 0.5; pointer-events: none; }
-    .feedback { margin-top: 10px; font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0; padding: 20px;
+    }
+    h1 { text-align: center; }
+    .dialogue {
+      background: white;
+      margin: 10px auto;
+      padding: 15px;
+      max-width: 600px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .locked { opacity: 0.4; pointer-events: none; }
+    .active { border-left: 5px solid #0077cc; }
+    button {
+      background: #0077cc; color: white;
+      border: none; padding: 8px 16px;
+      border-radius: 5px; cursor: pointer;
+    }
+    .feedback { margin-top: 10px; }
     .success { color: green; }
     .fail { color: red; }
+    .transcript {
+      margin-top: 5px;
+      font-style: italic;
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <h1>Strict Dialogue Repetition Trainer</h1>
+  <h1>🎤 Self-Introduction Practice</h1>
+  <p style="text-align:center;">Speak each part aloud. The system will check your grammar. Only correct sentences unlock the next step.</p>
 
-  <div id="dialogues"></div>
+  <div id="exercise"></div>
 
   <script>
+    // Steps of self-introduction
     const lines = [
-      "Hello, how are you?",
-      "I am fine, thank you.",
-      "What are you doing today?",
-      "I am practising English speaking."
+      "Good morning everyone.",
+      "My name is [Your Name].",
+      "I come from [Your City].",
+      "I am pursuing my degree in [Your Course] at [Your College].",
+      "There are [number] members in my family.",
+      "My father is a [profession].",
+      "My mother is a [profession].",
+      "My strengths are that I am hardworking and honest.",
+      "My hobbies are reading books and playing chess.",
+      "In the future, I would like to become a software engineer.",
+      "That was a short introduction about myself. Thank you."
     ];
 
-    // contraction + spelling equivalences
-    const equivalences = {
-      "i'm": "i am",
-      "practicing": "practising",
-      "color": "colour",
-      "organize": "organise",
-      "realize": "realise"
-    };
-
-    function normalize(s) {
-      return s.toLowerCase()
-        .replace(/[.,!?;:()"]/g,'')  // strip punctuation
-        .replace(/\s+/g,' ')         // collapse spaces
-        .trim();
-    }
-
-    function applyEquivalences(text) {
-      return text.split(/\s+/).map(w => equivalences[w] || w).join(" ");
-    }
-
-    // render dialogues
-    const container = document.getElementById("dialogues");
-    lines.forEach((line, index) => {
+    const container = document.getElementById("exercise");
+    lines.forEach((line, i) => {
       const div = document.createElement("div");
-      div.className = "dialogue" + (index === 0 ? " active" : " locked");
+      div.className = "dialogue locked";
+      if (i === 0) div.classList.add("active");
       div.innerHTML = `
-        <p><strong>Line ${index+1}:</strong> "${line}"</p>
-        <button onclick="playLine(${index})">🔊 Play</button>
-        <button onclick="startRecognition(${index})">🎤 Repeat</button>
-        <div class="feedback" id="feedback-${index}"></div>
+        <strong>Step ${i+1}:</strong> ${line}<br>
+        <button onclick="startRecognition(${i})">🎙 Speak</button>
+        <div class="transcript" id="transcript-${i}"></div>
+        <div class="feedback" id="feedback-${i}"></div>
       `;
       container.appendChild(div);
     });
 
-    // Strict SpeechRecognition
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    // Speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
     recognition.lang = "en-GB";
     recognition.interimResults = false;
-    recognition.maxAlternatives = 3;
+    recognition.maxAlternatives = 1;
 
-    function playLine(index) {
-      const utterance = new SpeechSynthesisUtterance(lines[index]);
-      const voices = speechSynthesis.getVoices();
-      const ukVoice = voices.find(v => v.lang === "en-GB") || voices[0];
-      utterance.voice = ukVoice;
-      utterance.lang = "en-GB";
-      speechSynthesis.speak(utterance);
-    }
+    let currentIndex = 0;
 
-    function startRecognition(index) {
+    function startRecognition(i) {
+      if (i !== currentIndex) return; // only current step allowed
       recognition.start();
-      recognition.onresult = (event) => {
-        const spoken = event.results[0][0].transcript.trim();
-        checkAnswer(index, spoken);
-      };
+      document.getElementById(`transcript-${i}`).textContent = "🎤 Listening...";
     }
 
-    function checkAnswer(index, spoken) {
-      const expected = normalize(lines[index]);
-      const got = normalize(spoken);
-      const adjusted = applyEquivalences(got);
+    recognition.onresult = function(event) {
+      const spoken = event.results[0][0].transcript;
+      const transcriptDiv = document.getElementById(`transcript-${currentIndex}`);
+      transcriptDiv.textContent = `You said: "${spoken}"`;
 
-      const feedback = document.getElementById(`feedback-${index}`);
+      const feedback = document.getElementById(`feedback-${currentIndex}`);
+      const correction = grammarCheck(spoken, lines[currentIndex]);
 
-      if (expected === adjusted) {
-        feedback.textContent = `✅ Accepted. You said: "${spoken}"`;
+      if (correction === null) {
+        feedback.textContent = "✅ Correct!";
         feedback.className = "feedback success";
-        const next = document.querySelectorAll(".dialogue")[index+1];
-        if (next) {
-          next.classList.remove("locked");
-          next.classList.add("active");
+        // unlock next
+        const all = document.querySelectorAll(".dialogue");
+        all[currentIndex].classList.remove("active");
+        currentIndex++;
+        if (all[currentIndex]) {
+          all[currentIndex].classList.remove("locked");
+          all[currentIndex].classList.add("active");
         }
       } else {
-        feedback.textContent = `❌ Not accepted. Expected: "${lines[index]}", but heard: "${spoken}"`;
+        feedback.innerHTML = `❌ ${correction}`;
         feedback.className = "feedback fail";
       }
+    };
+
+    recognition.onerror = function(event) {
+      alert("Error: " + event.error);
+    };
+
+    // Basic grammar check function (rule-based)
+    function grammarCheck(sentence, expected) {
+      const s = sentence.trim();
+
+      // Capitalisation of I
+      if (/\bi\b/.test(s)) {
+        return "Always capitalise 'I'.";
+      }
+
+      // Common intro rules
+      if (expected.startsWith("My name is")) {
+        if (!/my name is/i.test(s)) {
+          return "You must begin with 'My name is ...'.";
+        }
+        if (s.split(" ").length < 4) {
+          return "Incomplete. Please say your full name.";
+        }
+      }
+
+      if (expected.startsWith("I come from")) {
+        if (!/i come from/i.test(s)) {
+          return "You must say 'I come from ...'.";
+        }
+      }
+
+      if (expected.startsWith("There are")) {
+        if (!/there are/i.test(s)) {
+          return "Use 'There are ... members in my family'.";
+        }
+      }
+
+      if (/hobbies is/i.test(s)) {
+        return "Use 'My hobbies are ...', not 'is'.";
+      }
+
+      // If everything matches rules → accept
+      return null;
     }
   </script>
 </body>
