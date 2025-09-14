@@ -3,47 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dialogue Repetition Trainer</title>
+  <title>Strict Dialogue Repetition Trainer</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-    .dialogue {
-      margin: 15px 0;
-      padding: 15px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: none;
-    }
-    .active {
-      display: block;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px 15px;
-      border: none;
-      background: #333;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .locked {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    .feedback {
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    .dialogue { margin: 15px 0; padding: 15px; background: white;
+      border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: none; }
+    .active { display: block; }
+    button { margin-top: 10px; padding: 10px 15px; border: none;
+      background: #333; color: white; border-radius: 5px; cursor: pointer; }
+    .locked { opacity: 0.5; pointer-events: none; }
+    .feedback { margin-top: 10px; font-weight: bold; }
     .success { color: green; }
     .fail { color: red; }
   </style>
 </head>
 <body>
-  <h1>Dialogue Repetition Trainer</h1>
+  <h1>Strict Dialogue Repetition Trainer</h1>
 
   <div id="dialogues"></div>
 
@@ -57,23 +32,32 @@
 
     let currentIndex = 0;
 
-    // Display dialogues
     const container = document.getElementById("dialogues");
     lines.forEach((line, index) => {
       const div = document.createElement("div");
       div.className = "dialogue" + (index === 0 ? " active" : " locked");
       div.innerHTML = `
         <p><strong>Line ${index+1}:</strong> "${line}"</p>
+        <button onclick="playLine(${index})">🔊 Play</button>
         <button onclick="startRecognition(${index})">🎤 Repeat</button>
         <div class="feedback" id="feedback-${index}"></div>
       `;
       container.appendChild(div);
     });
 
-    // Speech recognition
+    // Strict SpeechRecognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-GB";
     recognition.interimResults = false;
+
+    function playLine(index) {
+      const utterance = new SpeechSynthesisUtterance(lines[index]);
+      // pick a British voice if available
+      const voices = speechSynthesis.getVoices();
+      const ukVoice = voices.find(v => v.lang === "en-GB") || voices[0];
+      utterance.voice = ukVoice;
+      speechSynthesis.speak(utterance);
+    }
 
     function startRecognition(index) {
       recognition.start();
@@ -84,60 +68,26 @@
     }
 
     function checkAnswer(index, spoken) {
-      const expected = lines[index].toLowerCase().replace(/[.,!?]/g,"").trim();
-      const got = spoken.toLowerCase().replace(/[.,!?]/g,"").trim();
-      
-      const similarity = compareText(expected, got);
+      const expected = normalise(lines[index]);
+      const got = normalise(spoken);
       const feedback = document.getElementById(`feedback-${index}`);
 
-      if (similarity >= 0.9) {
-        feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
+      if (expected === got) {
+        feedback.textContent = `✅ Perfect match. You said: "${spoken}"`;
         feedback.className = "feedback success";
-
-        // Unlock next line
         const next = document.querySelectorAll(".dialogue")[index+1];
         if (next) {
           next.classList.remove("locked");
           next.classList.add("active");
         }
       } else {
-        feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%). You said: "${spoken}"`;
+        feedback.textContent = `❌ Incorrect. Expected: "${lines[index]}" but you said: "${spoken}"`;
         feedback.className = "feedback fail";
       }
     }
 
-    // Similarity check (Levenshtein ratio)
-    function compareText(a, b) {
-      const longer = a.length > b.length ? a : b;
-      const shorter = a.length > b.length ? b : a;
-      const longerLength = longer.length;
-      if (longerLength === 0) return 1.0;
-      return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-    }
-
-    function editDistance(s1, s2) {
-      s1 = s1.toLowerCase();
-      s2 = s2.toLowerCase();
-
-      const costs = [];
-      for (let i = 0; i <= s1.length; i++) {
-        let lastValue = i;
-        for (let j = 0; j <= s2.length; j++) {
-          if (i === 0) costs[j] = j;
-          else {
-            if (j > 0) {
-              let newValue = costs[j - 1];
-              if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-              }
-              costs[j - 1] = lastValue;
-              lastValue = newValue;
-            }
-          }
-        }
-        if (i > 0) costs[s2.length] = lastValue;
-      }
-      return costs[s2.length];
+    function normalise(text) {
+      return text.toLowerCase().replace(/[.,!?]/g,"").trim();
     }
   </script>
 </body>
