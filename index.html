@@ -162,7 +162,7 @@ function startRecognition(expected, index, wIndex){
 function checkAnswer(spoken, expected, index, wIndex){
   const feedback = document.getElementById(`feedback-${index}-${wIndex}`);
   const similarity = compareText(spoken, expected);
-  if(similarity >= 0.7){
+  if(similarity >= 0.92){
     feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
     feedback.className = "feedback success";
     correctCount++;
