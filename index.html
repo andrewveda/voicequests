@@ -1,176 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Strict SOP Reading Trainer</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f0f4f8;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-}
-.container {
-  max-width: 700px;
-  width: 100%;
-  background: #fff;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-h1 {
-  text-align: center;
-  color: #1e40af;
-}
-#transcript {
-  margin: 20px 0;
-  font-size: 1rem;
-  line-height: 1.5;
-  background: #f3f4f6;
-  padding: 15px;
-  border-radius: 10px;
-}
-#student-response {
-  margin: 15px 0;
-  font-style: italic;
-  color: #065f46;
-}
-#feedback {
-  margin: 10px 0;
-  font-weight: bold;
-  color: #b91c1c;
-}
-button {
-  padding: 10px 20px;
-  background: #1e40af;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-button:hover {
-  background: #2563eb;
-}
-#progress {
-  width: 100%;
-  background: #ddd;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 20px;
-}
-#progress-bar {
-  height: 20px;
-  width: 0%;
-  background: #10b981;
-  border-radius: 10px;
-  transition: width 0.3s;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dialogue Repetition Trainer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    .dialogue {
+      margin: 15px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      background: #333;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .locked {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .feedback {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .success { color: green; }
+    .fail { color: red; }
+  </style>
 </head>
 <body>
-<div class="container">
-<h1>Strict SOP Reading Trainer</h1>
-<div id="transcript"></div>
-<div id="student-response"></div>
-<div id="feedback"></div>
-<button id="startBtn">Start Reading</button>
-<div id="progress">
-  <div id="progress-bar"></div>
-</div>
-</div>
+  <h1>Dialogue Repetition Trainer</h1>
 
-<script>
-const transcriptSentences = [
-"Good morning! My name is Anu Sharma, and I am a first-year BE Cybersecurity student at Maraimalai Nagar Women’s College.",
-"I have always been fascinated by technology, networks, and the challenge of keeping information safe in an increasingly digital world.",
-"During my school years, I participated in coding competitions, attended workshops on Python programming and network security, and explored ethical hacking online.",
-"My goal during my college life is to build a strong foundation in core cybersecurity subjects, including network security, cryptography, and ethical hacking.",
-"I plan to actively participate in coding clubs, cybersecurity workshops, and hackathons, where I can apply theoretical knowledge in practical scenarios.",
-"I am also eager to collaborate with peers on group projects to develop teamwork, communication, and leadership skills.",
-"Beyond academics, I aim to balance my personal growth by pursuing interests that enhance my creativity and analytical thinking.",
-"I enjoy reading books related to technology and psychology, playing strategy games like chess, and volunteering to mentor younger students in coding basics.",
-"I plan to take advantage of online certifications and practical labs to gain hands-on experience in areas like penetration testing, malware analysis, and secure software development.",
-"Ultimately, I hope to graduate as a skilled cybersecurity professional, with technical expertise as well as strong communication, problem-solving, and ethical decision-making abilities."
-];
+  <div id="dialogues"></div>
 
-let currentIndex = 0;
-const transcriptEl = document.getElementById('transcript');
-const studentEl = document.getElementById('student-response');
-const feedbackEl = document.getElementById('feedback');
-const startBtn = document.getElementById('startBtn');
-const progressBar = document.getElementById('progress-bar');
+  <script>
+    const lines = [
+      "Hello, how are you?",
+      "I am fine, thank you.",
+      "What are you doing today?",
+      "I am practising English speaking."
+    ];
 
-let recognition;
-if('webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SpeechRecognition();
-  recognition.lang = 'en-GB'; // Strict British English
-  recognition.interimResults = false;
-  recognition.continuous = false;
+    let currentIndex = 0;
 
-  recognition.onresult = function(event){
-    const transcript = event.results[0][0].transcript.trim();
-    studentEl.textContent = transcript;
-    // Strict match ignoring case
-    if(transcript.toLowerCase() === transcriptSentences[currentIndex].toLowerCase()){
-      feedbackEl.style.color = "#10b981";
-      feedbackEl.textContent = "Perfect! You read it correctly.";
-      currentIndex++;
-      progressBar.style.width = ((currentIndex / transcriptSentences.length) * 100) + "%";
-      setTimeout(() => {
-        if(currentIndex < transcriptSentences.length){
-          nextSentence();
-        } else {
-          transcriptEl.textContent = "Reading complete! Excellent job!";
-          feedbackEl.textContent = "";
-          startBtn.style.display = "block";
-        }
-      }, 1000);
-    } else {
-      feedbackEl.style.color = "#b91c1c";
-      feedbackEl.textContent = "Incorrect, please read again exactly.";
+    // Display dialogues
+    const container = document.getElementById("dialogues");
+    lines.forEach((line, index) => {
+      const div = document.createElement("div");
+      div.className = "dialogue" + (index === 0 ? " active" : " locked");
+      div.innerHTML = `
+        <p><strong>Line ${index+1}:</strong> "${line}"</p>
+        <button onclick="startRecognition(${index})">🎤 Repeat</button>
+        <div class="feedback" id="feedback-${index}"></div>
+      `;
+      container.appendChild(div);
+    });
+
+    // Speech recognition
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-GB";
+    recognition.interimResults = false;
+
+    function startRecognition(index) {
+      recognition.start();
+      recognition.onresult = (event) => {
+        const spoken = event.results[0][0].transcript.trim();
+        checkAnswer(index, spoken);
+      };
     }
-  }
 
-  recognition.onerror = function(event){
-    feedbackEl.textContent = "Error occurred: " + event.error;
-  }
-} else {
-  feedbackEl.textContent = "Speech Recognition not supported in this browser.";
-}
+    function checkAnswer(index, spoken) {
+      const expected = lines[index].toLowerCase().replace(/[.,!?]/g,"").trim();
+      const got = spoken.toLowerCase().replace(/[.,!?]/g,"").trim();
+      
+      const similarity = compareText(expected, got);
+      const feedback = document.getElementById(`feedback-${index}`);
 
-function speak(text){
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-GB';
-  utter.rate = 0.9;
-  utter.pitch = 1;
-  speechSynthesis.speak(utter);
-}
+      if (similarity >= 0.9) {
+        feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
+        feedback.className = "feedback success";
 
-function nextSentence(){
-  transcriptEl.textContent = transcriptSentences[currentIndex];
-  speak(transcriptSentences[currentIndex]);
-  studentEl.textContent = "";
-  feedbackEl.textContent = "Please read aloud exactly as shown...";
-}
+        // Unlock next line
+        const next = document.querySelectorAll(".dialogue")[index+1];
+        if (next) {
+          next.classList.remove("locked");
+          next.classList.add("active");
+        }
+      } else {
+        feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%). You said: "${spoken}"`;
+        feedback.className = "feedback fail";
+      }
+    }
 
-startBtn.addEventListener('click', ()=>{
-  startBtn.style.display = "none";
-  currentIndex = 0;
-  nextSentence();
-  if(recognition) recognition.start();
-});
+    // Similarity check (Levenshtein ratio)
+    function compareText(a, b) {
+      const longer = a.length > b.length ? a : b;
+      const shorter = a.length > b.length ? b : a;
+      const longerLength = longer.length;
+      if (longerLength === 0) return 1.0;
+      return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+    }
 
-// Restart recognition automatically
-if(recognition){
-  recognition.onend = function(){
-    if(currentIndex < transcriptSentences.length) recognition.start();
-  }
-}
-</script>
+    function editDistance(s1, s2) {
+      s1 = s1.toLowerCase();
+      s2 = s2.toLowerCase();
+
+      const costs = [];
+      for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+          if (i === 0) costs[j] = j;
+          else {
+            if (j > 0) {
+              let newValue = costs[j - 1];
+              if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+              }
+              costs[j - 1] = lastValue;
+              lastValue = newValue;
+            }
+          }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+      }
+      return costs[s2.length];
+    }
+  </script>
 </body>
 </html>
