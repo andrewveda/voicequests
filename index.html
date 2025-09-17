@@ -22,8 +22,9 @@
       display: block;
     }
     button {
-      margin-top: 10px;
-      padding: 10px 15px;
+      margin-top: 5px;
+      margin-right: 5px;
+      padding: 8px 12px;
       border: none;
       background: #333;
       color: white;
@@ -49,26 +50,47 @@
 
   <script>
     const lines = [
-      "Hello, how are you?",
-      "I am fine, thank you.",
-      "What are you doing today?",
-      "I am practising English speaking."
+      "A Zen master stood in the center of the hall, holding a simple wooden stick.",
+      "He looked like a conductor at the New York Philharmonic—or a wizard with a wand.",
+      "His eyes swept over the students as he said, “If you say this stick is real, I will beat you with it.”",
+      "If you say it is not real, I will beat you with it.",
+      "If you say nothing, I will beat you with it.”",
+      "The students froze.",
+      "The first, too puzzled to remain silent, raced through every possible answer in his mind.",
+      "Before he could speak, the master struck him with the stick.",
+      "Some students declared the stick real; others insisted it was not.",
+      "Both groups felt the brief, sharp contact of the stick.",
+      "One student, however, studied the scene more carefully.",
+      "He realized that the master’s words were a distraction.",
+      "Whether one answered “real,” “not real,” or remained silent, the result would be the same.",
+      "The true problem lay not in the words, but in the stick itself.",
+      "With calm determination, he leaned forward and broke the stick in two.",
+      "The hall fell silent, and then the master smiled and applauded.",
+      "As a reward for his insight, he presented a new koan: “What is the sound of one hand clapping?”"
     ];
 
     let currentIndex = 0;
-
-    // Display dialogues
     const container = document.getElementById("dialogues");
+
+    // Create dialogue blocks
     lines.forEach((line, index) => {
       const div = document.createElement("div");
       div.className = "dialogue" + (index === 0 ? " active" : " locked");
       div.innerHTML = `
         <p><strong>Line ${index+1}:</strong> "${line}"</p>
+        <button onclick="speakSentence('${line}')">🔊 Play</button>
         <button onclick="startRecognition(${index})">🎤 Repeat</button>
         <div class="feedback" id="feedback-${index}"></div>
       `;
       container.appendChild(div);
     });
+
+    // Speech synthesis for British accent
+    function speakSentence(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-GB";
+      speechSynthesis.speak(utterance);
+    }
 
     // Speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -81,11 +103,16 @@
         const spoken = event.results[0][0].transcript.trim();
         checkAnswer(index, spoken);
       };
+      recognition.onerror = (event) => {
+        const feedback = document.getElementById(`feedback-${index}`);
+        feedback.textContent = `⚠️ Error: ${event.error}`;
+        feedback.className = "feedback fail";
+      };
     }
 
     function checkAnswer(index, spoken) {
-      const expected = lines[index].toLowerCase().replace(/[.,!?]/g,"").trim();
-      const got = spoken.toLowerCase().replace(/[.,!?]/g,"").trim();
+      const expected = lines[index].toLowerCase().replace(/[.,!?”“]/g,"").trim();
+      const got = spoken.toLowerCase().replace(/[.,!?”“]/g,"").trim();
       
       const similarity = compareText(expected, got);
       const feedback = document.getElementById(`feedback-${index}`);
