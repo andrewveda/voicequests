@@ -77,9 +77,31 @@ let timerInterval;
 
 // Example IPA sounds
 const ipaSounds = [
-  {symbol:"/p/ pen, map, apple", words:["pen","map","apple"]}
+  {symbol:"/p/ pen, map, apple", words:["pen","map","apple"]},
+  {symbol:"/d/ dog, add, ride", words:["dog","add","ride"]},
+  {symbol:"/k/ cat, back, cake", words:["cat","back","cake"]},
+  {symbol:"/b/ ball, table, cab", words:["ball","table","cab"]},
+  {symbol:"/t/ top, cat, tea", words:["top","cat","tea"]}
 ];
 const totalItems = ipaSounds.length * 3;
+
+// Mini IPA dictionary (UK)
+const ipaDict = {
+  "pen": "pɛn",
+  "map": "mæp",
+  "apple": "ˈæpl̩",
+  "dog": "dɒg",
+  "add": "æd",
+  "ride": "raɪd",
+  "cat": "kæt",
+  "back": "bæk",
+  "cake": "keɪk",
+  "ball": "bɔːl",
+  "table": "ˈteɪbl̩",
+  "cab": "kæb",
+  "top": "tɒp",
+  "tea": "tiː"
+};
 
 // ----- NAME ENTRY -----
 function submitName() {
@@ -115,20 +137,17 @@ function initIPATrainer() {
   ipaSounds.forEach((item,index)=>{
     const block = document.createElement("div");
     block.className = "ipa-block";
-    let wordsHTML = '';
-    item.words.forEach((word,wIndex)=>{
-      const sentence = `I used a ${item.words[0]}, saw a ${item.words[1]}, and ate an ${item.words[2]}.`;
-      wordsHTML += `
-        <div>
-          <strong>Sentence:</strong> "${sentence}"
-          <br>
-          <button onclick="speakSentence('${sentence}')">🔊 Play</button>
-          <button onclick="startRecognition('${sentence}', ${index}, ${wIndex})">🎤 Repeat</button>
-          <div class="feedback" id="feedback-${index}-${wIndex}"></div>
-        </div>
-      `;
-    });
-    block.innerHTML = `<p><strong>IPA:</strong> ${item.symbol}</p>${wordsHTML}`;
+    const sentence = `I used a ${item.words[0]}, saw a ${item.words[1]}, and ate an ${item.words[2]}.`;
+    block.innerHTML = `
+      <p><strong>IPA:</strong> ${item.symbol}</p>
+      <div>
+        <strong>Sentence:</strong> "${sentence}"
+        <br>
+        <button onclick="speakSentence('${sentence}')">🔊 Play</button>
+        <button onclick="startRecognition('${sentence}', ${index})">🎤 Repeat</button>
+        <div class="feedback" id="feedback-${index}"></div>
+      </div>
+    `;
     container.appendChild(block);
   });
 }
@@ -145,24 +164,33 @@ const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognit
 recognition.lang = "en-GB";
 recognition.interimResults = false;
 
-function startRecognition(expected, index, wIndex){
+function startRecognition(expected, index){
   recognition.start();
   recognition.onresult = (event)=>{
     const spoken = event.results[0][0].transcript.trim().toLowerCase();
-    checkAnswer(spoken, expected.toLowerCase(), index, wIndex);
+    checkAnswer(spoken, expected.toLowerCase(), index);
   };
   recognition.onerror = (event)=>{
-    const feedback = document.getElementById(`feedback-${index}-${wIndex}`);
+    const feedback = document.getElementById(`feedback-${index}`);
     feedback.textContent = `⚠️ Error: ${event.error}`;
     feedback.className = "feedback fail";
   };
 }
 
-// ----- CHECK ANSWER -----
-function checkAnswer(spoken, expected, index, wIndex){
-  const feedback = document.getElementById(`feedback-${index}-${wIndex}`);
-  const similarity = compareText(spoken, expected);
-  if(similarity >= 0.92){
+// ----- CHECK ANSWER (IPA-based) -----
+function checkAnswer(spoken, expected, index){
+  const feedback = document.getElementById(`feedback-${index}`);
+
+  const expectedIPA = expected.split(" ")
+    .map(word => ipaDict[word] || word)
+    .join(" ");
+  const spokenIPA = spoken.split(" ")
+    .map(word => ipaDict[word] || word)
+    .join(" ");
+
+  const similarity = compareText(spokenIPA, expectedIPA);
+
+  if(similarity >= 0.9){
     feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
     feedback.className = "feedback success";
     correctCount++;
