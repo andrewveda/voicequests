@@ -32,6 +32,12 @@
   p {
     margin: 5px 0;
   }
+  .feedback {
+    font-weight: bold;
+    margin-top: 5px;
+  }
+  .success { color: green; }
+  .fail { color: red; }
 </style>
 </head>
 <body>
@@ -50,19 +56,7 @@
       {symbol:"/f/", words:["fish","leaf","coffee"]},
       {symbol:"/v/", words:["van","leave","save"]},
       {symbol:"/θ/", words:["think","both","bath"]},
-      {symbol:"/ð/", words:["this","mother","breathe"]},
-      {symbol:"/s/", words:["see","bus","pass"]},
-      {symbol:"/z/", words:["zoo","buzz","nose"]},
-      {symbol:"/ʃ/", words:["ship","push","cash"]},
-      {symbol:"/ʒ/", words:["measure","vision","beige"]},
-      {symbol:"/h/", words:["house","ahead","hello"]},
-      {symbol:"/m/", words:["man","home","time"]},
-      {symbol:"/n/", words:["no","ten","sun"]},
-      {symbol:"/ŋ/", words:["sing","long","ring"]},
-      {symbol:"/l/", words:["let","ball","full"]},
-      {symbol:"/r/", words:["red","try","car"]},
-      {symbol:"/j/", words:["yes","beyond","onion"]},
-      {symbol:"/w/", words:["we","away","wet"]}
+      {symbol:"/ð/", words:["this","mother","breathe"]}
     ];
 
     const container = document.getElementById("ipa-container");
@@ -70,21 +64,93 @@
     ipaSounds.forEach((item, index)=>{
       const block = document.createElement("div");
       block.className = "ipa-block";
+      let wordsHTML = '';
+      item.words.forEach((word, wIndex)=>{
+        wordsHTML += `
+          <div>
+            <strong>${word}</strong>
+            <button onclick="speakWord('${word}')">🔊 Play</button>
+            <button onclick="startRecognition('${word}', ${index}, ${wIndex})">🎤 Repeat</button>
+            <div class="feedback" id="feedback-${index}-${wIndex}"></div>
+          </div>
+        `;
+      });
       block.innerHTML = `
         <p><strong>IPA:</strong> ${item.symbol}</p>
-        <p><strong>Example Words:</strong> ${item.words.join(", ")}</p>
-        <button onclick="speakWords(${index})">🔊 Play Words</button>
+        ${wordsHTML}
       `;
       container.appendChild(block);
     });
 
-    function speakWords(index){
-      const words = ipaSounds[index].words;
-      words.forEach(word=>{
-        const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = "en-GB";
-        speechSynthesis.speak(utterance);
-      });
+    // Speech synthesis
+    function speakWord(word){
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-GB";
+      speechSynthesis.speak(utterance);
+    }
+
+    // Speech recognition
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-GB";
+    recognition.interimResults = false;
+
+    function startRecognition(expectedWord, index, wIndex){
+      recognition.start();
+      recognition.onresult = (event)=>{
+        const spoken = event.results[0][0].transcript.trim().toLowerCase();
+        checkAnswer(spoken, expectedWord.toLowerCase(), index, wIndex);
+      };
+      recognition.onerror = (event)=>{
+        const feedback = document.getElementById(`feedback-${index}-${wIndex}`);
+        feedback.textContent = `⚠️ Error: ${event.error}`;
+        feedback.className = "feedback fail";
+      };
+    }
+
+    function checkAnswer(spoken, expected, index, wIndex){
+      const feedback = document.getElementById(`feedback-${index}-${wIndex}`);
+      const similarity = compareText(spoken, expected);
+      if(similarity >= 0.9){
+        feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
+        feedback.className = "feedback success";
+      } else {
+        feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%). You said: "${spoken}"`;
+        feedback.className = "feedback fail";
+      }
+    }
+
+    // Levenshtein similarity
+    function compareText(a,b){
+      const longer = a.length > b.length ? a : b;
+      const shorter = a.length > b.length ? b : a;
+      const longerLength = longer.length;
+      if(longerLength === 0) return 1.0;
+      return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+    }
+
+    function editDistance(s1, s2){
+      s1 = s1.toLowerCase();
+      s2 = s2.toLowerCase();
+      const costs = [];
+      for(let i=0;i<=s1.length;i++){
+        let lastValue=i;
+        for(let j=0;j<=s2.length;j++){
+          if(i===0) costs[j]=j;
+          else{
+            if(j>0){
+              let newValue=costs[j-1];
+              if(s1.charAt(i-1)!==s2.charAt(j-1)){
+                newValue = Math.min(Math.min(newValue,lastValue),costs[j])+1;
+              }
+              costs[j-1]=lastValue;
+              lastValue=newValue;
+              lastValue=newValue;
+            }
+          }
+        }
+        if(i>0) costs[s2.length]=lastValue;
+      }
+      return costs[s2.length];
     }
   </script>
 </body>
