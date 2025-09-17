@@ -1,170 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dialogue Repetition Trainer</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
-    }
-    .dialogue {
-      margin: 15px 0;
-      padding: 15px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: none;
-    }
-    .active {
-      display: block;
-    }
-    button {
-      margin-top: 5px;
-      margin-right: 5px;
-      padding: 8px 12px;
-      border: none;
-      background: #333;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .locked {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    .feedback {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    .success { color: green; }
-    .fail { color: red; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPA Pronunciation Trainer</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .ipa-block {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  button {
+    padding: 8px 12px;
+    margin: 5px 5px 0 0;
+    border: none;
+    border-radius: 5px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+  }
+  p {
+    margin: 5px 0;
+  }
+</style>
 </head>
 <body>
-  <h1>Dialogue Repetition Trainer</h1>
+  <h1>IPA Pronunciation Trainer (British English)</h1>
 
-  <div id="dialogues"></div>
+  <div id="ipa-container"></div>
 
   <script>
-    const lines = [
-      "A Zen master stood in the center of the hall, holding a simple wooden stick.",
-      "He looked like a conductor at the New York Philharmonic—or a wizard with a wand.",
-      "His eyes swept over the students as he said, “If you say this stick is real, I will beat you with it.”",
-      "If you say it is not real, I will beat you with it.",
-      "If you say nothing, I will beat you with it.”",
-      "The students froze.",
-      "The first, too puzzled to remain silent, raced through every possible answer in his mind.",
-      "Before he could speak, the master struck him with the stick.",
-      "Some students declared the stick real; others insisted it was not.",
-      "Both groups felt the brief, sharp contact of the stick.",
-      "One student, however, studied the scene more carefully.",
-      "He realized that the master’s words were a distraction.",
-      "Whether one answered “real,” “not real,” or remained silent, the result would be the same.",
-      "The true problem lay not in the words, but in the stick itself.",
-      "With calm determination, he leaned forward and broke the stick in two.",
-      "The hall fell silent, and then the master smiled and applauded.",
-      "As a reward for his insight, he presented a new koan: “What is the sound of one hand clapping?”"
+    const ipaSounds = [
+      {symbol:"/p/", words:["pen","map","apple"]},
+      {symbol:"/b/", words:["ball","table","cab"]},
+      {symbol:"/t/", words:["top","cat","tea"]},
+      {symbol:"/d/", words:["dog","add","ride"]},
+      {symbol:"/k/", words:["cat","back","cake"]},
+      {symbol:"/g/", words:["go","bag","egg"]},
+      {symbol:"/f/", words:["fish","leaf","coffee"]},
+      {symbol:"/v/", words:["van","leave","save"]},
+      {symbol:"/θ/", words:["think","both","bath"]},
+      {symbol:"/ð/", words:["this","mother","breathe"]},
+      {symbol:"/s/", words:["see","bus","pass"]},
+      {symbol:"/z/", words:["zoo","buzz","nose"]},
+      {symbol:"/ʃ/", words:["ship","push","cash"]},
+      {symbol:"/ʒ/", words:["measure","vision","beige"]},
+      {symbol:"/h/", words:["house","ahead","hello"]},
+      {symbol:"/m/", words:["man","home","time"]},
+      {symbol:"/n/", words:["no","ten","sun"]},
+      {symbol:"/ŋ/", words:["sing","long","ring"]},
+      {symbol:"/l/", words:["let","ball","full"]},
+      {symbol:"/r/", words:["red","try","car"]},
+      {symbol:"/j/", words:["yes","beyond","onion"]},
+      {symbol:"/w/", words:["we","away","wet"]}
     ];
 
-    let currentIndex = 0;
-    const container = document.getElementById("dialogues");
+    const container = document.getElementById("ipa-container");
 
-    // Create dialogue blocks
-    lines.forEach((line, index) => {
-      const div = document.createElement("div");
-      div.className = "dialogue" + (index === 0 ? " active" : " locked");
-      div.innerHTML = `
-        <p><strong>Line ${index+1}:</strong> "${line}"</p>
-        <button onclick="speakSentence('${line}')">🔊 Play</button>
-        <button onclick="startRecognition(${index})">🎤 Repeat</button>
-        <div class="feedback" id="feedback-${index}"></div>
+    ipaSounds.forEach((item, index)=>{
+      const block = document.createElement("div");
+      block.className = "ipa-block";
+      block.innerHTML = `
+        <p><strong>IPA:</strong> ${item.symbol}</p>
+        <p><strong>Example Words:</strong> ${item.words.join(", ")}</p>
+        <button onclick="speakWords(${index})">🔊 Play Words</button>
       `;
-      container.appendChild(div);
+      container.appendChild(block);
     });
 
-    // Speech synthesis for British accent
-    function speakSentence(text) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-GB";
-      speechSynthesis.speak(utterance);
-    }
-
-    // Speech recognition
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "en-GB";
-    recognition.interimResults = false;
-
-    function startRecognition(index) {
-      recognition.start();
-      recognition.onresult = (event) => {
-        const spoken = event.results[0][0].transcript.trim();
-        checkAnswer(index, spoken);
-      };
-      recognition.onerror = (event) => {
-        const feedback = document.getElementById(`feedback-${index}`);
-        feedback.textContent = `⚠️ Error: ${event.error}`;
-        feedback.className = "feedback fail";
-      };
-    }
-
-    function checkAnswer(index, spoken) {
-      const expected = lines[index].toLowerCase().replace(/[.,!?”“]/g,"").trim();
-      const got = spoken.toLowerCase().replace(/[.,!?”“]/g,"").trim();
-      
-      const similarity = compareText(expected, got);
-      const feedback = document.getElementById(`feedback-${index}`);
-
-      if (similarity >= 0.9) {
-        feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
-        feedback.className = "feedback success";
-
-        // Unlock next line
-        const next = document.querySelectorAll(".dialogue")[index+1];
-        if (next) {
-          next.classList.remove("locked");
-          next.classList.add("active");
-        }
-      } else {
-        feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%). You said: "${spoken}"`;
-        feedback.className = "feedback fail";
-      }
-    }
-
-    // Similarity check (Levenshtein ratio)
-    function compareText(a, b) {
-      const longer = a.length > b.length ? a : b;
-      const shorter = a.length > b.length ? b : a;
-      const longerLength = longer.length;
-      if (longerLength === 0) return 1.0;
-      return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-    }
-
-    function editDistance(s1, s2) {
-      s1 = s1.toLowerCase();
-      s2 = s2.toLowerCase();
-
-      const costs = [];
-      for (let i = 0; i <= s1.length; i++) {
-        let lastValue = i;
-        for (let j = 0; j <= s2.length; j++) {
-          if (i === 0) costs[j] = j;
-          else {
-            if (j > 0) {
-              let newValue = costs[j - 1];
-              if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-              }
-              costs[j - 1] = lastValue;
-              lastValue = newValue;
-            }
-          }
-        }
-        if (i > 0) costs[s2.length] = lastValue;
-      }
-      return costs[s2.length];
+    function speakWords(index){
+      const words = ipaSounds[index].words;
+      words.forEach(word=>{
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = "en-GB";
+        speechSynthesis.speak(utterance);
+      });
     }
   </script>
 </body>
