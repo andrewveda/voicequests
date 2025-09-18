@@ -71,9 +71,11 @@
 <script>
 // ----- GLOBAL VARIABLES -----
 let playerName = "";
-let correctCount = 0;
 let startTime = 0;
 let timerInterval;
+
+// similarity scores per sentence
+let similarityScores = [];
 
 // Example IPA sentences
 const ipaSounds = [
@@ -81,11 +83,11 @@ const ipaSounds = [
     symbol: "/p/ papa, paper, park, puppy, people, pen, map, apple",
     sentence: "I used a pen, saw a map, and ate an apple."
   },
- {
+  {
     symbol: "/p/ park, puppy, people",
     sentence: "The puppy played in the park with the people."
   },
-    {
+  {
     symbol: "/p/ papa, pen, paper",
     sentence: "Papa picked up a pen and a piece of paper."
   },
@@ -197,10 +199,12 @@ function checkAnswer(spoken, expected, index){
 
   const similarity = compareText(spokenIPA, expectedIPA);
 
+  // store similarity score for this index
+  similarityScores[index] = similarity;
+
   if(similarity >= 0.7){
     feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
     feedback.className = "feedback success";
-    correctCount++;
   } else {
     feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%). You said: "${spoken}"`;
     feedback.className = "feedback fail";
@@ -243,15 +247,20 @@ function editDistance(s1,s2){
 function finishQuest(){
   stopTimer();
   const totalTime = Math.floor((Date.now()-startTime)/1000);
-  const percentage = Math.round((correctCount/totalItems)*100);
+
+  // calculate average similarity percentage
+  const avgSimilarity = similarityScores.length > 0 
+    ? similarityScores.reduce((a,b)=>a+b,0) / similarityScores.length 
+    : 0;
+
+  const percentage = Math.round(avgSimilarity * 100);
 
   document.getElementById("ipa-trainer-container").style.display = "none";
   document.getElementById("score-container").style.display = "block";
 
   document.getElementById("scoreCard").innerHTML = `
     <p>👤 Player: ${playerName}</p>
-    <p>✅ Correct Answers: ${correctCount} / ${totalItems}</p>
-    <p>📊 Correct Percentage: ${percentage}%</p>
+    <p>📊 Average Accuracy: ${percentage}%</p>
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
   `;
 
@@ -263,9 +272,7 @@ function finishQuest(){
     body: JSON.stringify({
       questId: "Voice Quest 1",
       name: playerName,
-      correct: correctCount,
-      total: totalItems,
-      highestStreak: percentage,
+      averageAccuracy: percentage,
       time: totalTime
     })
   });
