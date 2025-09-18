@@ -75,11 +75,30 @@ let correctCount = 0;
 let startTime = 0;
 let timerInterval;
 
-// Example IPA sounds
+// Example IPA sentences
 const ipaSounds = [
-  {symbol:"/p/ pen, map, apple", words:["pen","map","apple"]}
+  {
+    symbol: "/p/ pen, map, apple",
+    sentence: "I used a pen, saw a map, and ate an apple."
+  },
+  {
+    symbol: "/d/ dog, add, ride",
+    sentence: "The dog tried to add a ride to the park."
+  },
+  {
+    symbol: "/k/ cat, back, cake",
+    sentence: "The cat went back to eat the cake."
+  },
+  {
+    symbol: "/b/ ball, cab, table",
+    sentence: "The ball rolled under the cab near the table."
+  },
+  {
+    symbol: "/t/ top, tea",
+    sentence: "I put the tea on the top shelf."
+  }
 ];
-const totalItems = ipaSounds.length * 3;
+const totalItems = ipaSounds.length;
 
 // Mini IPA dictionary (UK)
 const ipaDict = {
@@ -133,7 +152,7 @@ function initIPATrainer() {
   ipaSounds.forEach((item,index)=>{
     const block = document.createElement("div");
     block.className = "ipa-block";
-    const sentence = `I used a ${item.words[0]}, saw a ${item.words[1]}, and ate an ${item.words[2]}.`;
+    const sentence = item.sentence;
     block.innerHTML = `
       <p><strong>IPA:</strong> ${item.symbol}</p>
       <div>
