@@ -217,7 +217,7 @@ function editDistance(s1,s2){
   }
   return costs[s2.length];
 }
-
+// ----- FINISH QUEST -----
 function finishQuest(){
   stopTimer();
   const totalTime = Math.floor((Date.now()-startTime)/1000);
@@ -234,7 +234,7 @@ function finishQuest(){
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
   `;
 
-  // Send results to Google Sheet
+  // ----- SEND ACCURACY TO GOOGLE SHEET -----
   fetch("https://script.google.com/macros/s/AKfycbwseKlRX_H_8BO7ZW30JZVhUMNq1iimlTwvINSNa8CsInxBNs4Iy0MLJqNzPIWpxakJ/exec", {
     method: "POST",
     mode: "no-cors",
@@ -242,8 +242,8 @@ function finishQuest(){
     body: JSON.stringify({
       questId: "IPA 1",
       name: playerName,
-      correct: Math.round(avgSimilarity * ipaSounds.length), // approximate correct count
-      wrong: Math.round((1 - avgSimilarity) * ipaSounds.length), // approximate wrong count
+      correct: 10,      // you can keep this fixed
+      wrong: percentage, // sends average accuracy %
       time: totalTime
     })
   });
