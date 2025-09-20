@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title> SRM Valliammai Engineering College </title>
+  <title>SRM Valliammai Engineering College - IPA Trainer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -33,7 +33,7 @@
       color: white;
     }
     .success { color: green; font-weight: bold; }
-    .error { color: red; font-weight: bold; }
+    .fail { color: red; font-weight: bold; }
     .ipa-block { background: #fff; border-radius: 10px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
     .feedback { font-weight: bold; margin-top: 5px; }
     #timer { font-size: 1.2rem; margin: 1rem 0; color: #d9534f; }
@@ -75,23 +75,11 @@ let startTime = 0;
 let timerInterval;
 let similarityScores = [];
 
-// Example IPA sentences
+// Example IPA sounds (sentence is hidden from student)
 const ipaSounds = [
-  {
-    symbol: "/p/ papa, paper, park, puppy, people, pen, map, apple",
-    sentence: "Listen attentively!",
-    key: "pen"   // real mp3 available
-  },
-  {
-    symbol: "/p/ park, puppy, people",
-    sentence: "Focus on the sounds!",
-    key: "puppy" // dummy
-  },
-  {
-    symbol: "/p/ papa, pen, paper",
-    sentence: "Perfect the sound!",
-    key: "papa"  // dummy
-  },
+  { symbol: "/p/ papa, paper, park, puppy", sentence: "Listen attentively!", key: "pen" },
+  { symbol: "/p/ park, puppy, people", sentence: "Focus on the sounds!", key: "puppy" },
+  { symbol: "/p/ papa, pen, paper", sentence: "Perfect the sound!", key: "papa" },
 ];
 
 // Mini IPA dictionary (UK)
@@ -105,9 +93,9 @@ const ipaDict = {
 
 // Teacher recordings map
 const teacherRecordings = {
-  "pen": "pen.mp3",                // actual file
-  "puppy": "puppy.mp3",      // replace later
-  "papa": "paper.mp3"         // replace later
+  "pen": "pen.mp3",
+  "puppy": "puppy.mp3",
+  "papa": "paper.mp3"
 };
 
 // ----- NAME ENTRY -----
@@ -116,7 +104,7 @@ function submitName() {
   const feedback = document.getElementById("name-feedback");
   if(!playerName){
     feedback.textContent = "Please enter your name!";
-    feedback.className = "error";
+    feedback.className = "fail";
     return;
   }
   feedback.textContent = "";
@@ -142,27 +130,16 @@ function initIPATrainer() {
   ipaSounds.forEach((item,index)=>{
     const block = document.createElement("div");
     block.className = "ipa-block";
-    const sentence = item.sentence;
     block.innerHTML = `
       <p><strong>IPA:</strong> ${item.symbol}</p>
       <div>
-        <strong>Sentence:</strong> "${sentence}"
-        <br>
-        <button onclick="speakSentence('${sentence}')">🔊 Play</button>
-        <button onclick="playTeacherVoice('${item.key}')">🎙️ Teacher's Voice</button>
-        <button onclick="startRecognition('${sentence}', ${index})">🎤 Repeat</button>
+        <button onclick="playTeacherVoice('${item.key}')">🎙️ Listen & Repeat</button>
+        <button onclick="startRecognition(${index})">🎤 Repeat</button>
         <div class="feedback" id="feedback-${index}"></div>
       </div>
     `;
     container.appendChild(block);
   });
-}
-
-// ----- SPEECH SYNTHESIS -----
-function speakSentence(sentence){
-  const utterance = new SpeechSynthesisUtterance(sentence);
-  utterance.lang = "en-GB";
-  speechSynthesis.speak(utterance);
 }
 
 // ----- TEACHER VOICE -----
@@ -181,16 +158,17 @@ const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognit
 recognition.lang = "en-GB";
 recognition.interimResults = false;
 
-function startRecognition(expected, index){
+function startRecognition(index){
+  const expectedSentence = ipaSounds[index].sentence; // hidden from student
   recognition.start();
   recognition.onresult = (event)=>{
     const spoken = event.results[0][0].transcript.trim().toLowerCase();
-    checkAnswer(spoken, expected.toLowerCase(), index);
+    checkAnswer(spoken, expectedSentence, index);
   };
   recognition.onerror = (event)=>{
     const feedback = document.getElementById(`feedback-${index}`);
     feedback.textContent = `⚠️ Error: ${event.error}`;
-    feedback.className = "feedback fail";
+    feedback.className = "fail";
   };
 }
 
@@ -202,11 +180,11 @@ function checkAnswer(spoken, expected, index){
   const similarity = compareText(spokenIPA, expectedIPA);
   similarityScores[index] = similarity;
   if(similarity >= 0.7){
-    feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%) You said: "${spoken}"`;
-    feedback.className = "feedback success";
+    feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%)`;
+    feedback.className = "success";
   } else {
-    feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%). You said: "${spoken}"`;
-    feedback.className = "feedback fail";
+    feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%)`;
+    feedback.className = "fail";
   }
 }
 
@@ -255,18 +233,6 @@ function finishQuest(){
     <p>📊 Average Accuracy: ${percentage}%</p>
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
   `;
-  fetch("https://script.google.com/macros/s/AKfycbwseKlRX_H_8BO7ZW30JZVhUMNq1iimlTwvINSNa8CsInxBNs4Iy0MLJqNzPIWpxakJ/exec", {
-    method: "POST",
-    mode: "no-cors",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      questId: "IPA 1",
-      name: playerName,
-      correct: 10,
-      wrong: percentage,
-      time: totalTime
-    })
-  });
 }
 
 // ----- RESTART -----
