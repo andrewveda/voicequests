@@ -217,20 +217,22 @@ function editDistance(s1,s2){
   }
   return costs[s2.length];
 }
-// ----- FINISH QUEST -----
 function finishQuest(){
   stopTimer();
   const totalTime = Math.floor((Date.now()-startTime)/1000);
   const avgSimilarity = similarityScores.length > 0 
     ? similarityScores.reduce((a,b)=>a+b,0) / similarityScores.length 
     : 0;
+
   const percentage = Math.round(avgSimilarity * 100);
+  const dynamicScore = Math.round(avgSimilarity * 25); // <-- NEW SCORE OUT OF 25
 
   document.getElementById("ipa-trainer-container").style.display = "none";
   document.getElementById("score-container").style.display = "block";
   document.getElementById("scoreCard").innerHTML = `
     <p>👤 Player: ${playerName}</p>
     <p>📊 Average Accuracy: ${percentage}%</p>
+    <p>💯 Score: ${dynamicScore} / 25</p>
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
   `;
 
@@ -242,15 +244,9 @@ function finishQuest(){
     body: JSON.stringify({
       questId: "IPA 1",
       name: playerName,
-      correct: 10,      // you can keep this fixed
-      wrong: percentage, // sends average accuracy %
+      correct: dynamicScore,  // now dynamic out of 25
+      wrong: 25 - dynamicScore,
       time: totalTime
     })
   });
 }
-
-// ----- RESTART -----
-function restartQuest(){ location.reload(); }
-</script>
-</body>
-</html>
