@@ -217,43 +217,39 @@ function editDistance(s1,s2){
   }
   return costs[s2.length];
 }
-function finishQuest() {
+function finishQuest(){
   stopTimer();
-
-  const totalTime = Math.floor((Date.now() - startTime) / 1000);
-
-  // Safe calculation of average similarity
-  const avgSimilarity = (similarityScores.length > 0)
-    ? similarityScores.reduce((a, b) => a + b, 0) / similarityScores.length
+  const totalTime = Math.floor((Date.now()-startTime)/1000);
+  const avgSimilarity = similarityScores.length > 0 
+    ? similarityScores.reduce((a,b)=>a+b,0) / similarityScores.length 
     : 0;
-
-  // Percentage and dynamic score out of 25
   const percentage = Math.round(avgSimilarity * 100);
-  const dynamicScore = Math.round(avgSimilarity * 25); // Score out of 25
-  const wrongScore = 25 - dynamicScore; // Ensure total = 25
 
-  // Show score container
   document.getElementById("ipa-trainer-container").style.display = "none";
   document.getElementById("score-container").style.display = "block";
-
   document.getElementById("scoreCard").innerHTML = `
     <p>👤 Player: ${playerName}</p>
     <p>📊 Average Accuracy: ${percentage}%</p>
-    <p>💯 Score: ${dynamicScore} / 25</p>
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
   `;
 
-  // Send score to Google Sheet
+  // ----- SEND ACCURACY TO GOOGLE SHEET -----
   fetch("https://script.google.com/macros/s/AKfycbwseKlRX_H_8BO7ZW30JZVhUMNq1iimlTwvINSNa8CsInxBNs4Iy0MLJqNzPIWpxakJ/exec", {
     method: "POST",
     mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
       questId: "IPA 1",
       name: playerName,
-      correct: dynamicScore, // dynamic score
-      wrong: wrongScore,     // dynamic wrong score
+      correct: percentage,      // you can keep this fixed
+      wrong: 0, // sends average accuracy %
       time: totalTime
     })
   });
 }
+
+// ----- RESTART -----
+function restartQuest(){ location.reload(); }
+</script>
+</body>
+</html>
