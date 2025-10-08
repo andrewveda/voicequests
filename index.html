@@ -83,14 +83,8 @@ const ipaSounds = [
 // Mini IPA dictionary (UK)
 const ipaDict = { "pen":"pɛn","map":"mæp","apple":"ˈæpl̩","puppy":"ˈpʌpi","papa":"ˈpɑːpə","people":"ˈpiːpl","park":"pɑːk" };
 
-// UK VOICE HANDLING
-let ukVoice = null;
-function loadUKVoice() {
-  const voices = window.speechSynthesis.getVoices();
-  ukVoice = voices.find(v => v.lang === "en-GB") || voices[0];
-}
-window.speechSynthesis.onvoiceschanged = loadUKVoice;
-loadUKVoice(); // initial call
+// Teacher recordings map (must exist on server)
+const teacherRecordings = { "pen":"pen.mp3", "puppy":"puppy.mp3", "papa":"paper.mp3" };
 
 // NAME ENTRY
 function beginQuiz() {
@@ -138,16 +132,11 @@ function initIPATrainer() {
   });
 }
 
-// TEACHER VOICE USING EN-GB
-function playTeacherVoice(key) {
-  const text = ipaSounds.find(item => item.key === key)?.sentence;
-  if (!text) { alert("No sentence found."); return; }
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = ukVoice;
-  utterance.rate = 0.9;
-  utterance.pitch = 1;
-  window.speechSynthesis.speak(utterance);
+// TEACHER VOICE
+function playTeacherVoice(key){
+  const url = teacherRecordings[key];
+  if(!url){ alert("No recording found."); return; }
+  const audio = new Audio(url); audio.play();
 }
 
 // SPEECH RECOGNITION
