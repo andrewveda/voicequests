@@ -83,9 +83,6 @@ const ipaSounds = [
 // Mini IPA dictionary (UK)
 const ipaDict = { "pen":"pɛn","map":"mæp","apple":"ˈæpl̩","puppy":"ˈpʌpi","papa":"ˈpɑːpə","people":"ˈpiːpl","park":"pɑːk" };
 
-// Teacher recordings map (must exist on server)
-const teacherRecordings = { "pen":"pen.mp3", "puppy":"puppy.mp3", "papa":"paper.mp3" };
-
 // NAME ENTRY
 function beginQuiz() {
   const nameVal = document.getElementById("nameInput").value.trim();
@@ -132,11 +129,18 @@ function initIPATrainer() {
   });
 }
 
-// TEACHER VOICE
-function playTeacherVoice(key){
-  const url = teacherRecordings[key];
-  if(!url){ alert("No recording found."); return; }
-  const audio = new Audio(url); audio.play();
+// TEACHER VOICE USING SPEECH SYNTHESIS (EN-GB)
+function playTeacherVoice(key) {
+  const text = ipaSounds.find(item => item.key === key)?.sentence;
+  if (!text) { alert("No sentence found."); return; }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voices = window.speechSynthesis.getVoices();
+  const ukVoices = voices.filter(v => v.lang === "en-GB");
+  utterance.voice = ukVoices.length ? ukVoices[0] : voices[0];
+  utterance.rate = 0.9; // slightly slower
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
 }
 
 // SPEECH RECOGNITION
