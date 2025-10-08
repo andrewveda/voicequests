@@ -83,6 +83,15 @@ const ipaSounds = [
 // Mini IPA dictionary (UK)
 const ipaDict = { "pen":"pɛn","map":"mæp","apple":"ˈæpl̩","puppy":"ˈpʌpi","papa":"ˈpɑːpə","people":"ˈpiːpl","park":"pɑːk" };
 
+// UK VOICE HANDLING
+let ukVoice = null;
+function loadUKVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  ukVoice = voices.find(v => v.lang === "en-GB") || voices[0];
+}
+window.speechSynthesis.onvoiceschanged = loadUKVoice;
+loadUKVoice(); // initial call
+
 // NAME ENTRY
 function beginQuiz() {
   const nameVal = document.getElementById("nameInput").value.trim();
@@ -129,16 +138,14 @@ function initIPATrainer() {
   });
 }
 
-// TEACHER VOICE USING SPEECH SYNTHESIS (EN-GB)
+// TEACHER VOICE USING EN-GB
 function playTeacherVoice(key) {
   const text = ipaSounds.find(item => item.key === key)?.sentence;
   if (!text) { alert("No sentence found."); return; }
 
   const utterance = new SpeechSynthesisUtterance(text);
-  const voices = window.speechSynthesis.getVoices();
-  const ukVoices = voices.filter(v => v.lang === "en-GB");
-  utterance.voice = ukVoices.length ? ukVoices[0] : voices[0];
-  utterance.rate = 0.9; // slightly slower
+  utterance.voice = ukVoice;
+  utterance.rate = 0.9;
   utterance.pitch = 1;
   window.speechSynthesis.speak(utterance);
 }
