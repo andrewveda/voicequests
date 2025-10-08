@@ -1,57 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SRM Valliammai Engineering College - IPA Trainer</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>V for Video! 🌌</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(ellipse at bottom, #0b0c1b 0%, #000000 100%);
+      color: white;
       text-align: center;
     }
     .container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      margin: 20px auto;
-      max-width: 700px;
-      text-align: left;
+      max-width: 800px;
+      margin: 2rem auto;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
     }
-    input, button {
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
-    }
+    .question { font-size: 1.5rem; margin-bottom: 1rem; }
+    .options { display: flex; flex-direction: column; gap: 1rem; }
     button {
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      background-color: #333;
-      color: white;
+      padding: 1rem; border: none; border-radius: 10px; font-size: 1rem;
+      cursor: pointer; background-color: #1f1f2e; color: white;
+      transition: background-color 0.3s ease;
     }
-    .success { color: green; font-weight: bold; }
-    .fail { color: red; font-weight: bold; }
-    .ipa-block { background: #fff; border-radius: 10px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
-    .feedback { font-weight: bold; margin-top: 5px; }
-    #timer { font-size: 1.2rem; margin: 1rem 0; color: #d9534f; }
-    #scoreCard p { font-size: 1.1rem; }
+    button:hover { background-color: #343454; }
+    .correct { background-color: green !important; }
+    .wrong { background-color: red !important; }
+    #scoreCard { margin-top: 2rem; font-size: 1.2rem; }
+    #timer, #wrongCounter, #streakCounter, #progressTracker {
+      font-size: 1rem; margin-bottom: 1rem; color: #ffd700;
+    }
+    #restartBtn {
+      margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem;
+      background-color: #444466; border: none; border-radius: 10px;
+      cursor: pointer; color: white;
+    }
+    #nameForm { margin-bottom: 1.5rem; }
+    #nameInput, #departmentSelect {
+      display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; 
+      padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: none;
+    }
   </style>
 </head>
 <body>
+  <div class="container" id="quizContainer">
+    <div id="nameForm">
+      <p style="color: #ffd700; font-size: 1rem; margin-bottom: 0.5rem;">
+        Enter your name and select your department to begin.
+      </p>
 
-<h1>SRM Valliammai Engineering College</h1>
+      <select id="departmentSelect">
+        <option value="">-- Select Department --</option>
+        <option value="Cyber Security">Cyber Security</option>
+        <option value="CSE-1">CSE-1</option>
+        <option value="CSE-2">CSE-2</option>
+        <option value="CSE-3">CSE-3</option>
+        <option value="CSE-3">EEE</option>
+        <option value="CSE-3">Civil</option>
+        <option value="CSE-3">Agri</option>
+        <option value="CSE-3">EIE</option>
+        <option value="CSE-3">Mechanical Engineering</option>
+        <option value="CSE-3">Medical Electronics</option>
 
-<!-- Name Entry -->
-<div class="container" id="name-container">
-  <h2>Enter Your Name</h2>
-  <input type="text" id="playerName" placeholder="Your Name">
-  <br>
-  <button onclick="submitName()">Start Quest</button>
-  <p id="name-feedback"></p>
-</div>
+      </select>
+
+      <input type="text" id="nameInput" placeholder="Enter your name" />
+      <button onclick="beginQuiz()">Start Quest</button>
+    </div>
 
 <!-- IPA Trainer -->
 <div class="container" id="ipa-trainer-container" style="display:none;">
@@ -232,24 +252,34 @@ function finishQuest(){
     <p>📊 Average Accuracy: ${percentage}%</p>
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
   `;
-
-  // ----- SEND ACCURACY TO GOOGLE SHEET -----
-  fetch("https://script.google.com/macros/s/AKfycbwseKlRX_H_8BO7ZW30JZVhUMNq1iimlTwvINSNa8CsInxBNs4Iy0MLJqNzPIWpxakJ/exec", {
-    method: "POST",
-    mode: "no-cors",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      questId: "IPA 1",
-      name: playerName,
-      correct: (percentage),      // you can keep this fixed
+  fetch("https://script.google.com/macros/s/AKfycbxA0lRkERWFt2cYfmm04IQioaG4-21k5VFF5CFKP30zyVaJXM5_27PL3v8JIZEweK3u/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: playerName,
+               correct: (percentage),      // you can keep this fixed
       wrong: 100-(percentage) , // sends average accuracy %
-      time: totalTime
-    })
-  });
-}
+ time: totalTime,
+          department: playerDepartment,
+          questId: "Quest 46",
+          guesses: guessesPerQuestion
+        })
+      });
+    }
 
-// ----- RESTART -----
-function restartQuest(){ location.reload(); }
-</script>
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        timerEl.innerText = `⏳ Time: ${elapsed}s`;
+      }, 1000);
+    }
+
+    restartBtn.onclick = () => {
+      document.getElementById("quizContent").style.display = "none";
+      document.getElementById("nameForm").style.display = "block";
+      document.getElementById("nameInput").value = "";
+    };
+  </script>
 </body>
 </html>
