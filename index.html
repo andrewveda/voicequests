@@ -1,79 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>V for Video! 🌌</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: radial-gradient(ellipse at bottom, #0b0c1b 0%, #000000 100%);
-      color: white;
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 2rem;
-      border-radius: 15px;
-      box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-    }
-    .question { font-size: 1.5rem; margin-bottom: 1rem; }
-    .options { display: flex; flex-direction: column; gap: 1rem; }
-    button {
-      padding: 1rem; border: none; border-radius: 10px; font-size: 1rem;
-      cursor: pointer; background-color: #1f1f2e; color: white;
-      transition: background-color 0.3s ease;
-    }
-    button:hover { background-color: #343454; }
-    .correct { background-color: green !important; }
-    .wrong { background-color: red !important; }
-    #scoreCard { margin-top: 2rem; font-size: 1.2rem; }
-    #timer, #wrongCounter, #streakCounter, #progressTracker {
-      font-size: 1rem; margin-bottom: 1rem; color: #ffd700;
-    }
-    #restartBtn {
-      margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem;
-      background-color: #444466; border: none; border-radius: 10px;
-      cursor: pointer; color: white;
-    }
-    #nameForm { margin-bottom: 1.5rem; }
-    #nameInput, #departmentSelect {
-      display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; 
-      padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>V for Video! 🌌</title>
+<style>
+body {
+  margin: 0; padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(ellipse at bottom, #0b0c1b 0%, #000000 100%);
+  color: white; text-align: center;
+}
+.container {
+  max-width: 800px; margin: 2rem auto;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2rem; border-radius: 15px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+button {
+  padding: 1rem; border: none; border-radius: 10px; font-size: 1rem;
+  cursor: pointer; background-color: #1f1f2e; color: white;
+  transition: background-color 0.3s ease;
+}
+button:hover { background-color: #343454; }
+.correct { background-color: green !important; }
+.wrong { background-color: red !important; }
+#timer { font-size: 1rem; margin-bottom: 1rem; color: #ffd700; }
+#restartBtn { margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem; background-color: #444466; border-radius: 10px; color: white; cursor: pointer; }
+#nameInput, #departmentSelect { display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: none; }
+.feedback { margin-top: 0.5rem; }
+.success { color: #00ff00; }
+.fail { color: #ff5555; }
+</style>
 </head>
 <body>
-  <div class="container" id="quizContainer">
-    <div id="nameForm">
-      <p style="color: #ffd700; font-size: 1rem; margin-bottom: 0.5rem;">
-        Enter your name and select your department to begin.
-      </p>
 
-      <select id="departmentSelect">
-        <option value="">-- Select Department --</option>
-        <option value="Cyber Security">Cyber Security</option>
-        <option value="CSE-1">CSE-1</option>
-        <option value="CSE-2">CSE-2</option>
-        <option value="CSE-3">CSE-3</option>
-        <option value="CSE-3">EEE</option>
-        <option value="CSE-3">Civil</option>
-        <option value="CSE-3">Agri</option>
-        <option value="CSE-3">EIE</option>
-        <option value="CSE-3">Mechanical Engineering</option>
-        <option value="CSE-3">Medical Electronics</option>
+<div class="container" id="nameForm">
+  <p style="color: #ffd700;">Enter your name and select your department to begin.</p>
+  <input type="text" id="nameInput" placeholder="Enter your name" />
+  <select id="departmentSelect">
+    <option value="">-- Select Department --</option>
+    <option value="Cyber Security">Cyber Security</option>
+    <option value="CSE-1">CSE-1</option>
+    <option value="CSE-2">CSE-2</option>
+    <option value="CSE-3">CSE-3</option>
+    <option value="EEE">EEE</option>
+    <option value="Civil">Civil</option>
+    <option value="Agri">Agri</option>
+    <option value="EIE">EIE</option>
+    <option value="Mechanical Engineering">Mechanical Engineering</option>
+    <option value="Medical Electronics">Medical Electronics</option>
+  </select>
+  <button onclick="beginQuiz()">Start Quest</button>
+</div>
 
-      </select>
-
-      <input type="text" id="nameInput" placeholder="Enter your name" />
-      <button onclick="beginQuiz()">Start Quest</button>
-    </div>
-
-<!-- IPA Trainer -->
 <div class="container" id="ipa-trainer-container" style="display:none;">
   <h2>IPA Pronunciation Trainer</h2>
   <div id="timer">⏳ Time: 0s</div>
@@ -81,21 +61,19 @@
   <button onclick="finishQuest()">✅ Submit Results</button>
 </div>
 
-<!-- Scorecard -->
 <div class="container" id="score-container" style="display:none;">
   <h2>🎉 Quest Completed!</h2>
   <div id="scoreCard"></div>
-  <button onclick="restartQuest()">🔄 Restart</button>
+  <button id="restartBtn">🔄 Restart</button>
 </div>
 
 <script>
-// ----- GLOBAL VARIABLES -----
-let playerName = "";
-let startTime = 0;
-let timerInterval;
-let similarityScores = [];
+// GLOBAL VARIABLES
+let playerName = "", playerDepartment = "", startTime = 0, timerInterval;
+let similarityScores = [], guessesPerQuestion = [];
+const timerEl = document.getElementById("timer");
 
-// Example IPA sounds (sentence is hidden from student)
+// IPA sounds
 const ipaSounds = [
   { symbol: "/p/ papa, paper, park, puppy", sentence: "I used a pen, saw a map, and ate an apple.", key: "pen" },
   { symbol: "/p/ park, puppy, people", sentence: "The puppy played in the park with the people.", key: "puppy" },
@@ -103,50 +81,41 @@ const ipaSounds = [
 ];
 
 // Mini IPA dictionary (UK)
-const ipaDict = {
-  "pen": "pɛn", "map": "mæp", "apple": "ˈæpl̩",
-  "dog": "dɒg", "add": "æd", "ride": "raɪd",
-  "cat": "kæt", "back": "bæk", "cake": "keɪk",
-  "ball": "bɔːl", "table": "ˈteɪbl̩", "cab": "kæb",
-  "top": "tɒp", "tea": "tiː"
-};
+const ipaDict = { "pen":"pɛn","map":"mæp","apple":"ˈæpl̩","puppy":"ˈpʌpi","papa":"ˈpɑːpə","people":"ˈpiːpl","park":"pɑːk" };
 
-// Teacher recordings map
-const teacherRecordings = {
-  "pen": "pen.mp3",
-  "puppy": "puppy.mp3",
-  "papa": "paper.mp3"
-};
+// Teacher recordings map (must exist on server)
+const teacherRecordings = { "pen":"pen.mp3", "puppy":"puppy.mp3", "papa":"papa.mp3" };
 
-// ----- NAME ENTRY -----
-function submitName() {
-  playerName = document.getElementById("playerName").value.trim();
-  const feedback = document.getElementById("name-feedback");
-  if(!playerName){
-    feedback.textContent = "Please enter your name!";
-    feedback.className = "fail";
-    return;
-  }
-  feedback.textContent = "";
-  document.getElementById("name-container").style.display = "none";
+// NAME ENTRY
+function beginQuiz() {
+  const nameVal = document.getElementById("nameInput").value.trim();
+  const deptVal = document.getElementById("departmentSelect").value;
+  if(!nameVal || !deptVal){ alert("Please enter your name and select your department!"); return; }
+  playerName = nameVal;
+  playerDepartment = deptVal;
+  document.getElementById("nameForm").style.display = "none";
   document.getElementById("ipa-trainer-container").style.display = "block";
   startTime = Date.now();
   startTimer();
   initIPATrainer();
 }
 
-// ----- TIMER -----
-function startTimer(){
+// TIMER
+function startTimer() {
   timerInterval = setInterval(()=>{
     const elapsed = Math.floor((Date.now()-startTime)/1000);
-    document.getElementById("timer").innerText = `⏳ Time: ${elapsed}s`;
+    timerEl.innerText = `⏳ Time: ${elapsed}s`;
   },1000);
 }
 function stopTimer(){ clearInterval(timerInterval); }
 
-// ----- IPA TRAINER -----
+// IPA TRAINER
 function initIPATrainer() {
   const container = document.getElementById("ipa-container");
+  container.innerHTML = "";
+  similarityScores = [];
+  guessesPerQuestion = ipaSounds.map(()=>0);
+
   ipaSounds.forEach((item,index)=>{
     const block = document.createElement("div");
     block.className = "ipa-block";
@@ -157,66 +126,55 @@ function initIPATrainer() {
         <button onclick="startRecognition(${index})">🎤 Repeat</button>
         <div class="feedback" id="feedback-${index}"></div>
       </div>
+      <hr>
     `;
     container.appendChild(block);
   });
 }
 
-// ----- TEACHER VOICE -----
+// TEACHER VOICE
 function playTeacherVoice(key){
   const url = teacherRecordings[key];
-  if(!url){
-    alert("No teacher recording found.");
-    return;
-  }
-  const audio = new Audio(url);
-  audio.play();
+  if(!url){ alert("No recording found."); return; }
+  const audio = new Audio(url); audio.play();
 }
 
-// ----- SPEECH RECOGNITION -----
+// SPEECH RECOGNITION
 const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.lang = "en-GB";
-recognition.interimResults = false;
+recognition.lang = "en-GB"; recognition.interimResults = false;
 
 function startRecognition(index){
-  const expectedSentence = ipaSounds[index].sentence; // hidden from student
+  guessesPerQuestion[index]++;
   recognition.start();
   recognition.onresult = (event)=>{
     const spoken = event.results[0][0].transcript.trim().toLowerCase();
-    checkAnswer(spoken, expectedSentence, index);
+    checkAnswer(spoken, ipaSounds[index].sentence, index);
   };
   recognition.onerror = (event)=>{
-    const feedback = document.getElementById(`feedback-${index}`);
-    feedback.textContent = `⚠️ Error: ${event.error}`;
-    feedback.className = "fail";
+    document.getElementById(`feedback-${index}`).textContent = `⚠️ Error: ${event.error}`;
   };
 }
 
-// ----- CHECK ANSWER -----
+// CHECK ANSWER
 function checkAnswer(spoken, expected, index){
   const feedback = document.getElementById(`feedback-${index}`);
-  const expectedIPA = expected.split(" ").map(w => ipaDict[w] || w).join(" ");
-  const spokenIPA = spoken.split(" ").map(w => ipaDict[w] || w).join(" ");
+  const expectedIPA = expected.split(" ").map(w=>ipaDict[w]||w).join(" ");
+  const spokenIPA = spoken.split(" ").map(w=>ipaDict[w]||w).join(" ");
   const similarity = compareText(spokenIPA, expectedIPA);
   similarityScores[index] = similarity;
-  if(similarity >= 0.7){
-    feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%)`;
-    feedback.className = "success";
-  } else {
-    feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%)`;
-    feedback.className = "fail";
-  }
+  if(similarity >= 0.7){ feedback.textContent = `✅ Correct! (${Math.round(similarity*100)}%)`; feedback.className="success"; }
+  else{ feedback.textContent = `❌ Incorrect (${Math.round(similarity*100)}%)`; feedback.className="fail"; }
 }
 
-// ----- LEVENSHTEIN -----
+// LEVENSHTEIN
 function compareText(a,b){
   const longer = a.length > b.length ? a : b;
   const shorter = a.length > b.length ? b : a;
-  if(longer.length === 0) return 1.0;
-  return (longer.length - editDistance(longer, shorter)) / parseFloat(longer.length);
+  if(longer.length===0) return 1.0;
+  return (longer.length - editDistance(longer,shorter)) / longer.length;
 }
 function editDistance(s1,s2){
-  s1 = s1.toLowerCase(); s2 = s2.toLowerCase();
+  s1=s1.toLowerCase(); s2=s2.toLowerCase();
   const costs = [];
   for(let i=0;i<=s1.length;i++){
     let lastValue=i;
@@ -225,11 +183,8 @@ function editDistance(s1,s2){
       else{
         if(j>0){
           let newValue=costs[j-1];
-          if(s1.charAt(i-1)!==s2.charAt(j-1)){
-            newValue=Math.min(Math.min(newValue,lastValue),costs[j])+1;
-          }
-          costs[j-1]=lastValue;
-          lastValue=newValue;
+          if(s1.charAt(i-1)!==s2.charAt(j-1)){ newValue=Math.min(Math.min(newValue,lastValue),costs[j])+1; }
+          costs[j-1]=lastValue; lastValue=newValue;
         }
       }
     }
@@ -237,49 +192,42 @@ function editDistance(s1,s2){
   }
   return costs[s2.length];
 }
+
+// FINISH QUEST
 function finishQuest(){
   stopTimer();
   const totalTime = Math.floor((Date.now()-startTime)/1000);
-  const avgSimilarity = similarityScores.length > 0 
-    ? similarityScores.reduce((a,b)=>a+b,0) / similarityScores.length 
-    : 0;
-  const percentage = Math.round(avgSimilarity * 100);
+  const avgSimilarity = similarityScores.reduce((a,b)=>a+b,0)/similarityScores.length;
+  const percentage = Math.round(avgSimilarity*100);
 
-  document.getElementById("ipa-trainer-container").style.display = "none";
-  document.getElementById("score-container").style.display = "block";
+  document.getElementById("ipa-trainer-container").style.display="none";
+  document.getElementById("score-container").style.display="block";
   document.getElementById("scoreCard").innerHTML = `
     <p>👤 Player: ${playerName}</p>
     <p>📊 Average Accuracy: ${percentage}%</p>
     <p>⏱️ Time Taken: ${totalTime} seconds</p>
+    <p>📝 Guesses per Question: ${guessesPerQuestion.join(", ")}</p>
   `;
+
+  // Post to Google Sheets
   fetch("https://script.google.com/macros/s/AKfycbxA0lRkERWFt2cYfmm04IQioaG4-21k5VFF5CFKP30zyVaJXM5_27PL3v8JIZEweK3u/exec", {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: playerName,
-               correct: (percentage),      // you can keep this fixed
-      wrong: 100-(percentage) , // sends average accuracy %
- time: totalTime,
-          department: playerDepartment,
-          questId: "Quest 46",
-          guesses: guessesPerQuestion
-        })
-      });
-    }
+    method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name: playerName, correct: percentage, wrong:100-percentage, time: totalTime,
+      department: playerDepartment, questId: "Quest 46", guesses: guessesPerQuestion
+    })
+  });
+}
 
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        timerEl.innerText = `⏳ Time: ${elapsed}s`;
-      }, 1000);
-    }
+// RESTART
+document.getElementById("restartBtn").onclick = () => {
+  document.getElementById("score-container").style.display="none";
+  document.getElementById("nameForm").style.display="block";
+  document.getElementById("nameInput").value="";
+  document.getElementById("departmentSelect").value="";
+  similarityScores=[]; guessesPerQuestion=[];
+};
+</script>
 
-    restartBtn.onclick = () => {
-      document.getElementById("quizContent").style.display = "none";
-      document.getElementById("nameForm").style.display = "block";
-      document.getElementById("nameInput").value = "";
-    };
-  </script>
 </body>
 </html>
