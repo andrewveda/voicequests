@@ -8,29 +8,48 @@
 body {
   margin: 0; padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: radial-gradient(ellipse at bottom, #0b0c1b 0%, #000000 100%);
-  color: white; text-align: center;
+  background: radial-gradient(circle at top left, #0f0c29, #302b63, #24243e);
+  color: #e0e0e0; text-align: center;
 }
+
 .container {
   max-width: 800px; margin: 2rem auto;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(30, 30, 50, 0.8);
   padding: 2rem; border-radius: 15px;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 40px rgba(72, 61, 139, 0.5);
 }
+
 button {
   padding: 1rem; border: none; border-radius: 10px; font-size: 1rem;
-  cursor: pointer; background-color: #1f1f2e; color: white;
-  transition: background-color 0.3s ease;
+  cursor: pointer; background-color: #4a3f9f; color: #fff;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
-button:hover { background-color: #343454; }
-.correct { background-color: green !important; }
-.wrong { background-color: red !important; }
-#timer { font-size: 1rem; margin-bottom: 1rem; color: #ffd700; }
-#restartBtn { margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem; background-color: #444466; border-radius: 10px; color: white; cursor: pointer; }
-#nameInput, #departmentSelect { display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: none; }
-.feedback { margin-top: 0.5rem; }
-.success { color: #00ff00; }
-.fail { color: #ff5555; }
+button:hover {
+  background-color: #6c5fc7;
+  box-shadow: 0 0 15px rgba(108, 95, 199, 0.6);
+}
+
+.correct { background-color: #00ff9f !important; color:#000; }
+.wrong { background-color: #ff4f6e !important; color:#fff; }
+
+#timer { font-size: 1rem; margin-bottom: 1rem; color: #00ffff; }
+
+#restartBtn {
+  margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem;
+  background-color: #6c5fc7; border-radius: 10px; color: white; cursor: pointer;
+  box-shadow: 0 0 15px rgba(108, 95, 199, 0.6);
+}
+#restartBtn:hover { background-color: #8478e1; }
+
+#nameInput, #departmentSelect {
+  display: block; width: 90%; max-width: 300px; margin: 0.5rem auto;
+  padding: 0.7rem; font-size: 1rem; border-radius: 5px;
+  border: 1px solid #8888ff; background-color: #1f1f3f; color: #fff;
+}
+
+.feedback .success { color: #00ff9f; }
+.feedback .fail { color: #ff4f6e; }
+
 </style>
 </head>
 <body>
