@@ -67,10 +67,11 @@ button:hover { background-color: #6c5fc7; box-shadow: 0 0 15px rgba(108, 95, 199
   <h2 id="soundTitle">IPA Pronunciation Trainer</h2>
   <div id="timer">⏳ Time: 0s</div>
   <div id="ipa-container"></div>
- <div class="nav-buttons">
+<div class="nav-buttons">
   <button id="prevBtn" onclick="prevSound()">⬅️ Previous Sound</button>
   <button id="nextBtn" onclick="nextSound()" disabled>➡️ Next Sound</button>
 </div>
+<button id="skipBtn" onclick="skipSound()">⏭️ Skip Sound</button>
 <button id="finishBtn" onclick="finishQuest()" style="display:none;">✅ Submit Results</button>
 </div>
 
@@ -217,6 +218,20 @@ function nextSound(){
   if(currentSoundIndex < sounds.length-1){
     currentSoundIndex++;
     loadCurrentSound();
+  }
+}
+  // SKIP SOUND
+function skipSound(){
+  // Mark all sentences as recorded to enable next button logic
+  recordedStatus = Array(ipaSounds.length).fill(true);
+  similarityScores = Array(ipaSounds.length).fill(0); // assume skipped = 0% similarity
+  guessesPerQuestion = Array(ipaSounds.length).fill(0);
+
+  if(currentSoundIndex < sounds.length-1){
+    currentSoundIndex++;
+    loadCurrentSound();
+  } else {
+    finishQuest(); // if last sound, finish quest
   }
 }
 function prevSound(){ if(currentSoundIndex>0){ currentSoundIndex--; loadCurrentSound(); } }
