@@ -28,7 +28,7 @@ button:hover { background-color: #6c5fc7; box-shadow: 0 0 15px rgba(108, 95, 199
 #timer { font-size: 1rem; margin-bottom: 1rem; color: #00ffff; }
 #restartBtn { margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem; background-color: #6c5fc7; border-radius: 10px; color: white; cursor: pointer; box-shadow: 0 0 15px rgba(108, 95, 199, 0.6);}
 #restartBtn:hover { background-color: #8478e1; }
-#nameInput, #departmentSelect { display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: 1px solid #8888ff; background-color: #1f1f3f; color: #fff; }
+#nameInput, #departmentSelect { display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: 1px solid #8888ff; background-color: #1[...]
 .feedback .success { color: #00ff9f; }
 .feedback .fail { color: #ff4f6e; }
 .ipa-block { margin-bottom: 1.5rem; text-align: left; }
@@ -88,40 +88,41 @@ let sheetData=[], sounds=[], currentSoundIndex=0;
 let ipaSounds=[], similarityScores=[], guessesPerQuestion=[];
 let currentQuestId="";
 let recordedStatus = []; // tracks which sentences are recorded on current page
+let currentAudio = null; // << NEW: Track currently playing audio
 
 const timerEl = document.getElementById("timer");
 
 // HARDCODED DATA
 sheetData = [
-  {Sound:"/b/", Sentence:"Be yourself. Everyone else is taken.", KeyWord:"be", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/be.m4a", QuestId:"IPA 2", Notes:"Oscar Wilde. Embrace your own personality. Authenticity improves mental health."},
-{Sound:"/b/", Sentence:"Be boring is the best disguise for brilliance.", KeyWord:"boring brilliance", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/boringbrilliance.m4a", QuestId:"IPA 2", Notes:""},
+  {Sound:"/b/", Sentence:"Be yourself. Everyone else is taken.", KeyWord:"be", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/be.m4a", QuestId:"IPA 2", Notes:"Oscar Wilde. Embr[...]
+{Sound:"/b/", Sentence:"Be boring is the best disguise for brilliance.", KeyWord:"boring brilliance", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/boringbrilliance.m4a", Ques[...]
 {Sound:"/b/", Sentence:"Being busy is the best barrier against boredom.", KeyWord:"busy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/busy.m4a", QuestId:"IPA 2", Notes:""},
-{Sound:"/d/", Sentence:"Days devoted to delight are rarely days wasted", KeyWord:"days", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/days.m4a", QuestId:"IPA 3", Notes:"Time spent on things that make you happy is never wasted."},
-{Sound:"/d/", Sentence:"Do or do not. There is no try.", KeyWord:"do", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/do.m4a", QuestId:"IPA 3", Notes:"Commit fully to your actions rather than half-hearted attempts. Commitment increases performance."},
-{Sound:"/d/", Sentence:"Doubt is the delightful companion of discerning minds", KeyWord:"doubt", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/doubt.m4a", QuestId:"IPA 3", Notes:"The unexamined life is not worth living. Socrates"},
-{Sound:"/dʒ/", Sentence:"Jump past jibes and jab at doubt, jovially juggle challenges", KeyWord:"jump", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/jump.m4a", QuestId:"IPA 4", Notes:"Resilience research: optimism helps overcome obstacles"},
-{Sound:"/f/", Sentence:"Fact looks like a feeble fable. Fiction fashions fantasies that feel far fresher", KeyWord:"fact", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fact.m4a", QuestId:"IPA 5", Notes:"Sometimes real events seem boring and stories feel exciting"},
-{Sound:"/f/", Sentence:"Fortune favours the fearless and frowns upon the fainthearted", KeyWord:"fortune", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fortune.m4a", QuestId:"IPA 5", Notes:""},
-{Sound:"/f/", Sentence:"Friendship flourished where frankness finds fertile ground", KeyWord:"friendship", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/friendship.m4a", QuestId:"IPA 5", Notes:"Honesty strengthens relationships"},
-{Sound:"/f/", Sentence:"Fun, though faked, fools our finesh faculties into feeling actual felicity", KeyWord:"fun", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fun.m4a", QuestId:"IPA 5", Notes:"Positive emotions can be self generated."},
-{Sound:"/g/", Sentence:"Genuine genius journeys where the jaded dare not tread", KeyWord:"genuine", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/genuine.m4a", QuestId:"IPA 6", Notes:"True geniuses explore where others are too tired or uninterested."},
-{Sound:"/g/", Sentence:"Genuine jewels of wisdom make me jump with joy", KeyWord:"genuine gems", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/genuinegems.m4a", QuestId:"IPA 6", Notes:"True knowledge excites and inspires"},
-{Sound:"/g/", Sentence:"Grit gathers glory, grows greatness and makes grand the game of life", KeyWord:"grand grit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/grandgrit.m4a", QuestId:"IPA 6", Notes:"Angela Duckworth, Grit: The Power of Passion and Perseverance. Listen to her TED talk."},
-{Sound:"/g/", Sentence:"Generations glow with grandeur yet only grit guarantees it", KeyWord:"grit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/grit.m4a", QuestId:"IPA 6", Notes:"Everyone is talking about generational wealth. Grit gives that."},
+{Sound:"/d/", Sentence:"Days devoted to delight are rarely days wasted", KeyWord:"days", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/days.m4a", QuestId:"IPA 3", Notes:"Time [...]
+{Sound:"/d/", Sentence:"Do or do not. There is no try.", KeyWord:"do", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/do.m4a", QuestId:"IPA 3", Notes:"Commit fully to your acti[...]
+{Sound:"/d/", Sentence:"Doubt is the delightful companion of discerning minds", KeyWord:"doubt", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/doubt.m4a", QuestId:"IPA 3", Not[...]
+{Sound:"/dʒ/", Sentence:"Jump past jibes and jab at doubt, jovially juggle challenges", KeyWord:"jump", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/jump.m4a", QuestId:"IPA [...]
+{Sound:"/f/", Sentence:"Fact looks like a feeble fable. Fiction fashions fantasies that feel far fresher", KeyWord:"fact", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fact.m[...]
+{Sound:"/f/", Sentence:"Fortune favours the fearless and frowns upon the fainthearted", KeyWord:"fortune", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fortune.m4a", QuestId:[...]
+{Sound:"/f/", Sentence:"Friendship flourished where frankness finds fertile ground", KeyWord:"friendship", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/friendship.m4a", Quest[...]
+{Sound:"/f/", Sentence:"Fun, though faked, fools our finesh faculties into feeling actual felicity", KeyWord:"fun", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fun.m4a", Que[...]
+{Sound:"/g/", Sentence:"Genuine genius journeys where the jaded dare not tread", KeyWord:"genuine", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/genuine.m4a", QuestId:"IPA 6"[...]
+{Sound:"/g/", Sentence:"Genuine jewels of wisdom make me jump with joy", KeyWord:"genuine gems", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/genuinegems.m4a", QuestId:"IPA 6[...]
+{Sound:"/g/", Sentence:"Grit gathers glory, grows greatness and makes grand the game of life", KeyWord:"grand grit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/grandgrit.m4[...]
+{Sound:"/g/", Sentence:"Generations glow with grandeur yet only grit guarantees it", KeyWord:"grit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/grit.m4a", QuestId:"IPA 6", [...]
 {Sound:"/k/", Sentence:"Clarity and cleverness conquer confusion.", KeyWord:"clarity", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/clarity.m4a", QuestId:"IPA 7", Notes:""},
-{Sound:"/k/", Sentence:"Courtesy costs nothing yet conquers countless cold conversations", KeyWord:"courtesy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/courtesy.m4a", QuestId:"IPA 7", Notes:"Being polite improves social interactions"},
-{Sound:"/k/", Sentence:"Kings and knaves share the same kingdom yet know it differently.", KeyWord:"kings", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/kings.m4a", QuestId:"IPA 7", Notes:"People in the same situation perceive it differently."},
-{Sound:"/p/", Sentence:"Popularity is the perfume of the mediocrity pleasing only to the partially perceptive.", KeyWord:"Popularity", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/Popularity.m4a", QuestId:"IPA 1", Notes:"Popularity often reflects conformity, not quality."},
+{Sound:"/k/", Sentence:"Courtesy costs nothing yet conquers countless cold conversations", KeyWord:"courtesy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/courtesy.m4a", Que[...]
+{Sound:"/k/", Sentence:"Kings and knaves share the same kingdom yet know it differently.", KeyWord:"kings", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/kings.m4a", QuestId:"[...]
+{Sound:"/p/", Sentence:"Popularity is the perfume of the mediocrity pleasing only to the partially perceptive.", KeyWord:"Popularity", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests[...]
 {Sound:"/p/", Sentence:"I used a pen, saw a map, and ate an apple.", KeyWord:"pen", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pen.mp3", QuestId:"IPA 1", Notes:""},
-{Sound:"/p/", Sentence:"People paint personalities with preposterous precision producing perfect puzzles", KeyWord:"people", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/people.m4a", QuestId:"IPA 1", Notes:""},
-{Sound:"/p/", Sentence:"Pizzas possessing peculiar properties politely protested being eated at precisely seven forty two a.m.", KeyWord:"pizza", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pizza.m4a", QuestId:"IPA 1", Notes:"Hint: The Answer to the Ultimate Question of Life, the Universe, and Everything. Douglas Adams"},
-{Sound:"/p/", Sentence:"Pleasure when pursued passionately produces both poetry and peril.", KeyWord:"pleasure", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pleasure.m4a", QuestId:"IPA 1", Notes:""},
-{Sound:"/p/", Sentence:"Pompous proclamations provoke polite pity more than passionate protest", KeyWord:"pompous", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pompous.m4a", QuestId:"IPA 1", Notes:"Humility is more persuasive."},
+{Sound:"/p/", Sentence:"People paint personalities with preposterous precision producing perfect puzzles", KeyWord:"people", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/peop[...]
+{Sound:"/p/", Sentence:"Pizzas possessing peculiar properties politely protested being eated at precisely seven forty two a.m.", KeyWord:"pizza", MP3File:"https://raw.githubusercontent.com/andrewveda/[...]
+{Sound:"/p/", Sentence:"Pleasure when pursued passionately produces both poetry and peril.", KeyWord:"pleasure", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pleasure.m4a", Q[...]
+{Sound:"/p/", Sentence:"Pompous proclamations provoke polite pity more than passionate protest", KeyWord:"pompous", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pompous.m4a",[...]
 {Sound:"/p/", Sentence:"The puppy played in the park with the people", KeyWord:"puppy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/puppy.mp3", QuestId:"IPA 1", Notes:""},
-{Sound:"/t/", Sentence:"Talent when tempered by tact transforms triviality into triumph.", KeyWord:"Talent", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/Talent.m4a", QuestId:"IPA 8", Notes:""},
-{Sound:"/tʃ/", Sentence:"Champions cherish challenges and choose the chains of discipline.", KeyWord:"champions", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/champions.m4a", QuestId:"IPA 9", Notes:"We embrace hard work and discipline."},
-{Sound:"/tʃ/", Sentence:"Charm changes character more than chastisement ever could", KeyWord:"charm", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/charm.m4a", QuestId:"IPA 9", Notes:""},
-{Sound:"/tʃ/", Sentence:"Choices, cherished or challenged, chart the course of character", KeyWord:"choices", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/choices.m4a", QuestId:"IPA 9", Notes:"It is our choices, Harry, that show what we truly are, far more than our abilities. Albus Dumbledore. J.K. Rowling, Harry Potter and the Chamber of Secrets"}
+{Sound:"/t/", Sentence:"Talent when tempered by tact transforms triviality into triumph.", KeyWord:"Talent", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/Talent.m4a", QuestId[...]
+{Sound:"/tʃ/", Sentence:"Champions cherish challenges and choose the chains of discipline.", KeyWord:"champions", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/champions.m4a"[...]
+{Sound:"/tʃ/", Sentence:"Charm changes character more than chastisement ever could", KeyWord:"charm", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/charm.m4a", QuestId:"IPA 9[...]
+{Sound:"/tʃ/", Sentence:"Choices, cherished or challenged, chart the course of character", KeyWord:"choices", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/choices.m4a", Ques[...]
 ];
 
 // get unique sounds
@@ -153,11 +154,16 @@ function stopTimer(){ clearInterval(timerInterval); }
 
 // LOAD CURRENT SOUND
 function loadCurrentSound(){
-stopTimer();              // Stop any existing timer
-startTime = Date.now();    // Reset start time for this sound
-startTimer();              // Start timer again
-// ---------------------------------------------------------------------
-const soundKey = sounds[currentSoundIndex];
+  stopTimer();              // Stop any existing timer
+  startTime = Date.now();    // Reset start time for this sound
+  startTimer();              // Start timer again
+  // ---------------------------------------------------------------------
+  // Stop any playing audio when loading sound
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+  const soundKey = sounds[currentSoundIndex];
   ipaSounds = sheetData.filter(r=>r.Sound===soundKey).map(r=>({
     sentence:r.Sentence, key:r.KeyWord, mp3:r.MP3File, questId:r.QuestId
   }));
@@ -176,7 +182,6 @@ const soundKey = sounds[currentSoundIndex];
   document.getElementById("finishBtn").style.display = (currentSoundIndex === sounds.length-1) ? "inline-block" : "none";
 }
 
-// RENDER IPA BLOCKS
 // RENDER IPA BLOCKS (SHOW NOTES INSTEAD OF SENTENCES)
 function renderIPABlocks(){
   const container = document.getElementById("ipa-container");
@@ -197,6 +202,11 @@ function renderIPABlocks(){
 
 // NAVIGATION
 function nextSound(){
+  // Stop any playing audio before navigating
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
   // Send current sound results
   const totalTime=Math.floor((Date.now()-startTime)/1000);
   const avgSimilarity=similarityScores.reduce((a,b)=>a+b,0)/similarityScores.length;
@@ -220,8 +230,13 @@ function nextSound(){
     loadCurrentSound();
   }
 }
-  // SKIP SOUND
+
 function skipSound(){
+  // Stop any playing audio before skipping
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
   // Mark all sentences as recorded to enable next button logic
   recordedStatus = Array(ipaSounds.length).fill(true);
   similarityScores = Array(ipaSounds.length).fill(0); // assume skipped = 0% similarity
@@ -234,10 +249,26 @@ function skipSound(){
     finishQuest(); // if last sound, finish quest
   }
 }
-function prevSound(){ if(currentSoundIndex>0){ currentSoundIndex--; loadCurrentSound(); } }
+
+function prevSound(){
+  // Stop any playing audio before navigating
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+  if(currentSoundIndex>0){ currentSoundIndex--; loadCurrentSound(); }
+}
 
 // AUDIO
-function playTeacherVoice(mp3){ const audio=new Audio(mp3); audio.play(); }
+function playTeacherVoice(mp3){ 
+  // Stop previous audio before playing new one
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
+  currentAudio = new Audio(mp3); 
+  currentAudio.play(); 
+}
 
 // SPEECH RECOGNITION
 const recognition=new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -304,6 +335,11 @@ function editDistance(s1,s2){
 
 // FINISH QUEST
 function finishQuest(){
+  // Stop any playing audio before showing score
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
   stopTimer();
   const totalTime=Math.floor((Date.now()-startTime)/1000);
   const avgSimilarity=similarityScores.reduce((a,b)=>a+b,0)/similarityScores.length;
@@ -329,6 +365,11 @@ function finishQuest(){
 
 // RESTART
 document.getElementById("restartBtn").onclick=()=>{
+  // Stop any playing audio before restart
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
   document.getElementById("score-container").style.display="none";
   document.getElementById("nameForm").style.display="block";
   document.getElementById("nameInput").value="";
@@ -336,7 +377,6 @@ document.getElementById("restartBtn").onclick=()=>{
   similarityScores=[]; guessesPerQuestion=[];
 };
 </script>
-
 
 </body>
 </html>
