@@ -213,8 +213,7 @@ function nextSound(){
       wrong:100-percentage,
       time:totalTime,
       department:playerDepartment,
-      guesses:guessesPerQuestion,
-      sound:sounds[currentSoundIndex]
+      questId:currentQuestId
     })
   });
 
@@ -335,7 +334,7 @@ function finishQuest(){
     body:JSON.stringify({
       name:playerName, correct:percentage, wrong:100-percentage,
       time:totalTime, department:playerDepartment,
-      questId:currentQuestId, guesses:guessesPerQuestion
+      questId:currentQuestId
     })
   });
 }
