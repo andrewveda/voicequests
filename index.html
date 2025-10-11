@@ -176,13 +176,15 @@ const soundKey = sounds[currentSoundIndex];
 }
 
 // RENDER IPA BLOCKS
+// RENDER IPA BLOCKS (SHOW NOTES INSTEAD OF SENTENCES)
 function renderIPABlocks(){
   const container = document.getElementById("ipa-container");
   container.innerHTML="";
   ipaSounds.forEach((item,index)=>{
     const block=document.createElement("div");
     block.className="ipa-block";
-    block.innerHTML=`<p><strong>Sentence ${index+1}:</strong> ${item.sentence}</p>
+    const note = sheetData.find(r => r.Sentence === item.sentence).Notes || "No note available.";
+    block.innerHTML=`<p><strong>Note ${index+1}:</strong> ${note}</p>
       <div>
         <button onclick="playTeacherVoice('${item.mp3}')">🎙️ Listen & Repeat</button>
         <button onclick="startRecognition(${index})">🎤 Repeat</button>
