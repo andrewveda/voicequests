@@ -130,7 +130,11 @@ function stopTimer(){ clearInterval(timerInterval); }
 
 // LOAD CURRENT SOUND
 function loadCurrentSound(){
-  const soundKey = sounds[currentSoundIndex];
+stopTimer();              // Stop any existing timer
+startTime = Date.now();    // Reset start time for this sound
+startTimer();              // Start timer again
+// ---------------------------------------------------------------------
+const soundKey = sounds[currentSoundIndex];
   ipaSounds = sheetData.filter(r=>r.Sound===soundKey).map(r=>({
     sentence:r.Sentence, key:r.KeyWord, mp3:r.MP3File, questId:r.QuestId
   }));
