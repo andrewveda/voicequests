@@ -162,7 +162,7 @@ const soundKey = sounds[currentSoundIndex];
   ipaSounds = sheetData.filter(r=>r.Sound===soundKey).map(r=>({
     sentence:r.Sentence, key:r.KeyWord, mp3:r.MP3File, questId:r.QuestId
   }));
-
+currentQuestId = ipaSounds[0].questId;
   similarityScores = Array(ipaSounds.length).fill(0);
   guessesPerQuestion = Array(ipaSounds.length).fill(0);
   recordedStatus = Array(ipaSounds.length).fill(false); // new
