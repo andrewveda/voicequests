@@ -1,177 +1,397 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Voice & Text Assessment</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dynamic IPA Pronunciation Trainer 🌌</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; padding: 30px; max-width: 800px; margin: auto; }
-  h1 { text-align: center; }
-  .step { display: none; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  .active { display: block; }
-  textarea { width: 100%; height: 120px; margin-top: 10px; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
-  button { padding: 10px 25px; border: none; border-radius: 6px; margin-top: 10px; cursor: pointer; background: #0066cc; color: white; font-size: 15px; }
-  button:hover { background: #004999; }
-  .score { margin-top: 10px; font-weight: bold; color: #006600; }
-  audio { display: block; margin-top: 10px; }
+body {
+  margin: 0; padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at top left, #0f0c29, #302b63, #24243e);
+  color: #e0e0e0; text-align: center;
+}
+.container {
+  max-width: 800px; margin: 2rem auto;
+  background: rgba(30, 30, 50, 0.8);
+  padding: 2rem; border-radius: 15px;
+  box-shadow: 0 0 40px rgba(72, 61, 139, 0.5);
+}
+button {
+  padding: 1rem; border: none; border-radius: 10px; font-size: 1rem;
+  cursor: pointer; background-color: #4a3f9f; color: #fff;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+button:hover { background-color: #6c5fc7; box-shadow: 0 0 15px rgba(108, 95, 199, 0.6); }
+.correct { background-color: #00ff9f !important; color:#000; }
+.wrong { background-color: #ff4f6e !important; color:#fff; }
+#timer { font-size: 1rem; margin-bottom: 1rem; color: #00ffff; }
+#restartBtn { margin-top: 2rem; padding: 0.7rem 2rem; font-size: 1.1rem; background-color: #6c5fc7; border-radius: 10px; color: white; cursor: pointer; box-shadow: 0 0 15px rgba(108, 95, 199, 0.6);}
+#restartBtn:hover { background-color: #8478e1; }
+#nameInput, #departmentSelect { display: block; width: 90%; max-width: 300px; margin: 0.5rem auto; padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: 1px solid #8888ff; background-color: #1f1f3f; color: #fff; }
+.feedback .success { color: #00ff9f; }
+.feedback .fail { color: #ff4f6e; }
+.ipa-block { margin-bottom: 1.5rem; text-align: left; }
+.nav-buttons { margin-top: 1rem; }
 </style>
 </head>
 <body>
 
-<h1>Student Voice & Text Assessment</h1>
-<label>Student Name: <input type="text" id="studentName" placeholder="Enter your name"></label>
+<div class="container" id="nameForm">
+  <p style="color: #ffd700;">Enter your name and select your department to begin.</p>
+  <input type="text" id="nameInput" placeholder="Enter your name" />
+  <select id="departmentSelect">
+    <option value="">-- Select Department --</option>
+    <option value="Cyber Security">Cyber Security</option>
+    <option value="CSE-1">CSE-1</option>
+    <option value="CSE-2">CSE-2</option>
+    <option value="CSE-3">CSE-3</option>
+    <option value="Mechanical Engineering">Mechanical Engineering</option>
+    <option value="ECE-1">ECE-1</option>
+    <option value="ECE-2">ECE-2</option>
+    <option value="ECE-3">ECE-3</option>
+    <option value="AI DS-1">AI DS-1</option>
+    <option value="AI DS-2">AI DS-2</option>
+    <option value="Civil">Civil</option>
+    <option value="Agri">Agri</option>
+    <option value="EEE">EEE</option>
+    <option value="EIE">EIE</option>
+    <option value="Medical Electronics">Medical Electronics</option>
+    <option value="IT-1">IT-1</option>
+    <option value="IT-2">IT-2</option>
+  </select>
+  <button onclick="beginQuiz()">Start Quest</button>
+</div>
 
-<div id="steps">
+<div class="container" id="ipa-trainer-container" style="display:none;">
+  <h2 id="soundTitle">IPA Pronunciation Trainer</h2>
+  <div id="timer">⏳ Time: 0s</div>
+  <div id="ipa-container"></div>
+<div class="nav-buttons">
+  <button id="prevBtn" onclick="prevSound()">⬅️ Previous Sound</button>
+  <button id="nextBtn" onclick="nextSound()" disabled>➡️ Next Sound</button>
+</div>
+<button id="skipBtn" onclick="skipSound()">⏭️ Skip Sound</button>
+<button id="finishBtn" onclick="finishQuest()" style="display:none;">✅ Submit Results</button>
+</div>
 
-  <!-- Step 1: Type Answer for Q1 -->
-  <div class="step active" id="step1" data-type="text" data-qid="1">
-    <h2>Question 1</h2>
-    <p>Describe your favourite book.</p>
-    <textarea placeholder="Type your answer here..."></textarea>
-    <button onclick="nextStep()">Next ➡️</button>
-  </div>
-
-  <!-- Step 2: Record Answer for Q1 -->
-  <div class="step" id="step2" data-type="record" data-qid="1">
-    <h2>Question 1 (Voice Recording)</h2>
-    <p>Please record your answer now.</p>
-    <button onclick="startRecording(this)">🎙 Start Recording</button>
-    <button onclick="stopRecording(this)">⏹ Stop & Analyse</button>
-    <audio controls></audio>
-    <div class="score"></div>
-    <button onclick="nextStep()">Next ➡️</button>
-  </div>
-
-  <!-- Step 3: Type Answer for Q2 -->
-  <div class="step" id="step3" data-type="text" data-qid="2">
-    <h2>Question 2</h2>
-    <p>Describe your favourite hobby.</p>
-    <textarea placeholder="Type your answer here..."></textarea>
-    <button onclick="nextStep()">Next ➡️</button>
-  </div>
-
-  <!-- Step 4: Record Answer for Q2 -->
-  <div class="step" id="step4" data-type="record" data-qid="2">
-    <h2>Question 2 (Voice Recording)</h2>
-    <p>Please record your answer now.</p>
-    <button onclick="startRecording(this)">🎙 Start Recording</button>
-    <button onclick="stopRecording(this)">⏹ Stop & Analyse</button>
-    <audio controls></audio>
-    <div class="score"></div>
-    <button onclick="submitAll()">Submit All Answers ✅</button>
-  </div>
-
+<div class="container" id="score-container" style="display:none;">
+  <h2>🎉 Quest Completed!</h2>
+  <div id="scoreCard"></div>
+  <button id="restartBtn">🔄 Restart</button>
 </div>
 
 <script>
-let currentStep = 1;
-let mediaRecorder;
-let audioChunks = [];
-let answers = {};
+// GLOBAL VARIABLES
+let playerName="", playerDepartment="", startTime=0, timerInterval;
+let sheetData=[], sounds=[], currentSoundIndex=0;
+let ipaSounds=[], similarityScores=[], guessesPerQuestion=[];
+let currentQuestId="";
+let recordedStatus = []; // tracks which sentences are recorded on current page
+let currentAudio = null; 
+  
+const timerEl = document.getElementById("timer");
 
-function nextStep() {
-  const current = document.getElementById(`step${currentStep}`);
-  if (current.dataset.type === "text") {
-    const text = current.querySelector('textarea').value.trim();
-    if (!text) return alert('Please type your answer before continuing.');
-    answers[`q${current.dataset.qid}`] = { typedText: text };
-  }
-  current.classList.remove('active');
-  currentStep++;
-  const next = document.getElementById(`step${currentStep}`);
-  if (next) next.classList.add('active');
+// HARDCODED DATA
+sheetData = [
+  {Sound:"/b/", Sentence:"Be yourself. Everyone else is taken.", KeyWord:"be", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/be.m4a", QuestId:"IPA 2", Notes:"Oscar Wilde. Embrace your own personality. Authenticity improves mental health."},
+{Sound:"/b/", Sentence:"Be boring is the best disguise for brilliance.", KeyWord:"boring brilliance", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/boringbrilliance.m4a", QuestId:"IPA 2", Notes:""},
+{Sound:"/b/", Sentence:"Being busy is the best barrier against boredom.", KeyWord:"busy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/busy.m4a", QuestId:"IPA 2", Notes:""},
+{Sound:"/v/", Sentence:"Voilà! In view, a humble vaudevillian veteran, cast vicariously as both victim and villain by the vicissitudes of Fate. This visage, no mere veneer of vanity, is a vestige of the vox populi, now vacant, vanished.", KeyWord:"voilà", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/v1.mp3", QuestId:"IPA 26", Notes:"Voilà – here it is! Vaudevillian – stage performer, entertainer. Veteran – experienced person. Vicariously – experiencing through someone else. Vicissitudes – changes, ups and downs. Visage – face. Veneer – thin outer layer. Vestige – leftover part. Vox populi – voice of the people."},
+{Sound:"/v/", Sentence:"However, this valorous visitation of a by-gone vexation stands vivified, and has vowed to vanquish these venal and virulent vermin vanguarding vice and vouchsafing the violently vicious and voracious violation of volition.", KeyWord:"valor", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/v2.mp3", QuestId:"IPA 26", Notes:"Valorous – brave. Visitation – arrival or event. By-gone vexation – past trouble. Vivified – brought to life. Vowed – promised. Vanquish – defeat. Venal – corrupt, greedy. Virulent – dangerous, harmful. Vermin – pests, bad people. Vanguarding – leading or promoting. Vice – immoral acts. Vouchsafing – granting. Voracious – very eager. Volition – personal choice."},
+{Sound:"/v/", Sentence:"The only verdict is vengeance; a vendetta, held as a votive, not in vain, for the value and veracity of such shall one day vindicate the vigilant and the virtuous.", KeyWord:"verdict", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/v3.mp3", QuestId:"IPA 26", Notes:"Verdict – decision. Vengeance – revenge. Vendetta – long-standing fight or revenge. Votive – dedicated as a promise. Vain – useless. Veracity – truthfulness. Vindicate – show something is right. Vigilant – watchful. Virtuous – morally good."},
+{Sound:"/v/", Sentence:"Verily, this vichyssoise of verbiage veers most verbose, so let me simply add that it is my very good honor to meet you and you may call me V.", KeyWord:"verily", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/v4.mp3", QuestId:"IPA 26", Notes:"Verily – truly. Vichyssoise – thick soup. Verbiage – wordiness. Veers – moves. Verbose – using too many words. Overall: This long, fancy speech is just a way to say 'It's a pleasure to meet you. Call me V.'"},
+{Sound:"/d/", Sentence:"Days devoted to delight are rarely days wasted", KeyWord:"days", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/days.m4a", QuestId:"IPA 3", Notes:"Time spent on things that make you happy is never wasted."},
+{Sound:"/d/", Sentence:"Do or do not. There is no try.", KeyWord:"do", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/do.m4a", QuestId:"IPA 3", Notes:"Commit fully to your actions rather than half-hearted attempts. Commitment increases performance."},
+{Sound:"/d/", Sentence:"Doubt is the delightful companion of discerning minds", KeyWord:"doubt", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/doubt.m4a", QuestId:"IPA 3", Notes:"The unexamined life is not worth living. Socrates"},
+{Sound:"/dʒ/", Sentence:"Jump past jibes and jab at doubt, jovially juggle challenges", KeyWord:"jump", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/jump.m4a", QuestId:"IPA 4", Notes:"Resilience research: optimism helps overcome obstacles"},
+{Sound:"/f/", Sentence:"Fact looks like a feeble fable. Fiction fashions fantasies that feel far fresher", KeyWord:"fact", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fact.m4a", QuestId:"IPA 5", Notes:"Sometimes real events seem boring and stories feel exciting"},
+{Sound:"/f/", Sentence:"Fortune favours the fearless and frowns upon the fainthearted", KeyWord:"fortune", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fortune.m4a", QuestId:"IPA 5", Notes:""},
+{Sound:"/f/", Sentence:"Friendship flourished where frankness finds fertile ground", KeyWord:"friendship", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/friendship.m4a", QuestId:"IPA 5", Notes:"Honesty strengthens relationships"},
+{Sound:"/f/", Sentence:"Fun, though faked, fools our finesh faculties into feeling actual felicity", KeyWord:"fun", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/fun.m4a", QuestId:"IPA 5", Notes:"Positive emotions can be self generated."},
+{Sound:"/g/", Sentence:"Genuine genius journeys where the jaded dare not tread", KeyWord:"genuine", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/genuine.m4a", QuestId:"IPA 6", Notes:"True geniuses explore where others are too tired or uninterested."},
+{Sound:"/g/", Sentence:"Genuine jewels of wisdom make me jump with joy", KeyWord:"genuine gems", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/genuinegems.m4a", QuestId:"IPA 6", Notes:"True knowledge excites and inspires"},
+{Sound:"/g/", Sentence:"Grit gathers glory, grows greatness and makes grand the game of life", KeyWord:"grand grit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/grandgrit.m4a", QuestId:"IPA 6", Notes:"Angela Duckworth, Grit: The Power of Passion and Perseverance. Listen to her TED talk."},
+{Sound:"/g/", Sentence:"Generations glow with grandeur yet only grit guarantees it", KeyWord:"grit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/grit.m4a", QuestId:"IPA 6", Notes:"Everyone is talking about generational wealth. Grit gives that."},
+{Sound:"/k/", Sentence:"Clarity and cleverness conquer confusion.", KeyWord:"clarity", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/clarity.m4a", QuestId:"IPA 7", Notes:""},
+{Sound:"/k/", Sentence:"Courtesy costs nothing yet conquers countless cold conversations", KeyWord:"courtesy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/courtesy.m4a", QuestId:"IPA 7", Notes:"Being polite improves social interactions"},
+{Sound:"/k/", Sentence:"Kings and knaves share the same kingdom yet know it differently.", KeyWord:"kings", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/kings.m4a", QuestId:"IPA 7", Notes:"People in the same situation perceive it differently."},
+{Sound:"/p/", Sentence:"Popularity is the perfume of the mediocrity pleasing only to the partially perceptive.", KeyWord:"Popularity", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/Popularity.m4a", QuestId:"IPA 1", Notes:"Popularity often reflects conformity, not quality."},
+{Sound:"/p/", Sentence:"I used a pen, saw a map, and ate an apple.", KeyWord:"pen", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pen.mp3", QuestId:"IPA 1", Notes:""},
+{Sound:"/p/", Sentence:"People paint personalities with preposterous precision producing perfect puzzles", KeyWord:"people", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/people.m4a", QuestId:"IPA 1", Notes:""},
+{Sound:"/p/", Sentence:"Pizzas possessing peculiar properties politely protested being eated at precisely seven forty two a.m.", KeyWord:"pizza", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pizza.m4a", QuestId:"IPA 1", Notes:"Hint: The Answer to the Ultimate Question of Life, the Universe, and Everything. Douglas Adams"},
+{Sound:"/p/", Sentence:"Pleasure when pursued passionately produces both poetry and peril.", KeyWord:"pleasure", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pleasure.m4a", QuestId:"IPA 1", Notes:""},
+{Sound:"/p/", Sentence:"Pompous proclamations provoke polite pity more than passionate protest", KeyWord:"pompous", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pompous.m4a", QuestId:"IPA 1", Notes:"Humility is more persuasive."},
+{Sound:"/p/", Sentence:"The puppy played in the park with the people", KeyWord:"puppy", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/puppy.mp3", QuestId:"IPA 1", Notes:""},
+{Sound:"/t/", Sentence:"Talent when tempered by tact transforms triviality into triumph.", KeyWord:"Talent", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/Talent.m4a", QuestId:"IPA 8", Notes:""},
+{Sound:"/tʃ/", Sentence:"Champions cherish challenges and choose the chains of discipline.", KeyWord:"champions", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/champions.m4a", QuestId:"IPA 9", Notes:"We embrace hard work and discipline."},
+{Sound:"/tʃ/", Sentence:"Charm changes character more than chastisement ever could", KeyWord:"charm", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/charm.m4a", QuestId:"IPA 9", Notes:""},
+{Sound:"/tʃ/", Sentence:"Choices, cherished or challenged, chart the course of character", KeyWord:"choices", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/choices.m4a", QuestId:"IPA 9", Notes:"It is our choices, Harry, that show what we truly are, far more than our abilities. Albus Dumbledore. J.K. Rowling, Harry Potter and the Chamber of Secrets"},
+  {Sound:"/m/", Sentence:"All moments matter when we are always mindful.", KeyWord:"moments", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/allmoments.m4a", QuestId:"IPA 16", Notes:"Every moment counts when we notice it. Paying attention turns small things into special ones."},
+{Sound:"/d/", Sentence:"Do not drift where we can dominate.", KeyWord:"dominate", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/donotdrift.m4a", QuestId:"IPA 25", Notes:"Don’t just float through life. Take charge and do your best where you can shine."},
+{Sound:"/t/", Sentence:"Ever tried. Ever failed. No matter. Try again. Fail again. Fail better.", KeyWord:"try", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/ever.m4a", QuestId:"IPA 8", Notes:"We are antifragile!"},
+{Sound:"/dʒ/", Sentence:"Journey not gently; jolt the giant asleep in you.", KeyWord:"journey", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/journeynotgently.m4a", QuestId:"IPA 4", Notes:"Wake up the brave part of you. Don’t move softly through life. Move with purpose."},
+{Sound:"/k/", Sentence:"Keep keenly kicking. Keep climbing cliffs. Keep cracking cosmic cryptic crosswords.", KeyWord:"keep", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/keep.m4a", QuestId:"IPA 7", Notes:"Keep going, keep learning, keep playing. Every step makes you better."},
+{Sound:"/l/", Sentence:"Lively minds love logic and long nights of labour.", KeyWord:"lively", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/lively.m4a", QuestId:"IPA 19", Notes:"Curious people enjoy working hard and thinking deeply. That’s how great ideas grow."},
+{Sound:"/ŋ/", Sentence:"Longing for freedom drives daring action.", KeyWord:"longing", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/longing.m4a", QuestId:"IPA 18", Notes:"When you truly want something, it gives you the courage to act."},
+{Sound:"/l/", Sentence:"Love your labour to leave a lasting legacy.", KeyWord:"love", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/love.m4a", QuestId:"IPA 19", Notes:"Do your work with love. That’s how it lasts and touches others."},
+{Sound:"/m/", Sentence:"Mellow moods magnify the magic of small moments.", KeyWord:"mellow", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/mellow.m4a", QuestId:"IPA 16", Notes:"Slow down and smile. Peaceful hearts see beauty everywhere."},
+{Sound:"/m/", Sentence:"Murmurs of wisdom move more than loud proclamations.", KeyWord:"murmurs", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/murmurs.m4a", QuestId:"IPA 16", Notes:"Quiet words often teach more than loud speeches. Calm truth reaches the heart."},
+{Sound:"/n/", Sentence:"Never neglect the needs of your own mind in favor of the crowd.", KeyWord:"neglect", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/neverneglect.m4a", QuestId:"IPA 17", Notes:"Take care of your own thoughts and peace first. Don’t lose yourself trying to please others."},
+{Sound:"/n/", Sentence:"No plan thrives without ambition.", KeyWord:"plan", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/noplan.m4a", QuestId:"IPA 17", Notes:"A dream needs fire to grow. Ambition gives every plan its wings."},
+{Sound:"/n/", Sentence:"Nothing nourishes greatness like never yielding to nonsense.", KeyWord:"greatness", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/nothing.m4a", QuestId:"IPA 17", Notes:"Stay focused and wise. Don’t waste energy on things that don’t matter."},
+{Sound:"/ŋ/", Sentence:"Nothing can hinder a mind intent on creating meaning.", KeyWord:"meaning", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/nothingcanhinder.m4a", QuestId:"IPA 18", Notes:"A clear purpose makes you unstoppable. Meaning gives strength even in hard times."},
+{Sound:"/ŋ/", Sentence:"Nothing is worth doing without daring and thinking.", KeyWord:"daring", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/nothingisworth.m4a", QuestId:"IPA 18", Notes:"Good work needs both courage and thought. Be brave and be wise together."},
+{Sound:"/ʒ/", Sentence:"Our pleasure and our leisure show us what we treasure.", KeyWord:"treasure", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/ourpleasure.m4a", QuestId:"IPA 15", Notes:"What makes you happy tells you what you truly value. Listen to your joys."},
+{Sound:"/ʒ/", Sentence:"Pleasure in small things measures the grandeur of life.", KeyWord:"pleasure", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/pleasureinsmall.m4a", QuestId:"IPA 15", Notes:"Happiness grows in the little things."},
+{Sound:"/r/", Sentence:"Rewards reach those who are relentlessly resolute.", KeyWord:"rewards", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/rewards.m4a", QuestId:"IPA 20", Notes:"Success comes to those who don’t give up. Keep going. It adds up."},
+{Sound:"/r/", Sentence:"Riches mean little without reason and responsibility.", KeyWord:"riches", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/riches.m4a", QuestId:"IPA 20", Notes:"Wealth is more than money. It’s wisdom, kindness, and care for others."},
+{Sound:"/r/", Sentence:"Rising early reveals a remarkable revelation.", KeyWord:"rising", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/rising.m4a", QuestId:"IPA 20", Notes:"Mornings bring clarity. A fresh start often brings fresh ideas."},
+{Sound:"/ʃ/", Sentence:"Shadows should show you where to shine.", KeyWord:"shadows", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/shadows.m4a", QuestId:"IPA 10", Notes:"Don’t fear your dark times. They help you see where your light belongs."},
+{Sound:"/ʃ/", Sentence:"The shallow shout of the crowd shall never shape the spirit that stays sure.", KeyWord:"spirit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/shallow.m4a", QuestId:"IPA 10", Notes:"Stay steady inside. The world’s noise fades when your heart is strong."},
+{Sound:"/ʃ/", Sentence:"Shine not because you're sheltered, but because you were shattered and shaped again.", KeyWord:"shine", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/shinenot.m4a", QuestId:"IPA 10", Notes:"Real strength grows from what you survive. Scars can still glow."},
+{Sound:"/s/", Sentence:"Society’s snobbery seldom spares sincere sentiment.", KeyWord:"society", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/society.m4a", QuestId:"IPA 13", Notes:"Stay kind even when others mock it. Sincerity is never wasted."},
+{Sound:"/ð/", Sentence:"Then they saw that their thoughts are inspirations for them to act!", KeyWord:"thoughts", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/thentheysaw.m4a", QuestId:"IPA 12", Notes:"Every good idea is a small spark. Act on it before it fades."},
+{Sound:"/ð/", Sentence:"There are those who thrive on others’ thoughts, and those who think their own.", KeyWord:"think", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/thereare.m4a", QuestId:"IPA 12", Notes:"Learn from others, but don’t lose your own voice. Independent thought brings strength."},
+{Sound:"/θ/", Sentence:"Things that threaten are best met with a thoughtful heart.", KeyWord:"things", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/things.m4a", QuestId:"IPA 11", Notes:"Stay calm when afraid. A kind and thinking heart always finds a way."},
+{Sound:"/ð/", Sentence:"Those that think more than they act thrive best.", KeyWord:"thrive", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/thosethatthink.m4a", QuestId:"IPA 12", Notes:"Thoughtful action beats quick reaction. Wisdom works better than haste."},
+{Sound:"/θ/", Sentence:"Those that thrive are those who think beyond the thin veil of habit.", KeyWord:"habit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/thosethatthrive.m4a", QuestId:"IPA 11", Notes:"Growth begins when we question what we always do. Thinking fresh opens doors."},
+{Sound:"/θ/", Sentence:"Those who think deeply should not forget to thrive in the theater of life.", KeyWord:"theater", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/thosewhothink.m4a", QuestId:"IPA 11", Notes:"Don’t just live in your mind. Live in the world too. Balance thought with joy."},
+{Sound:"/l/", Sentence:"To lift your spirits, laugh lightly.", KeyWord:"laugh", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/tolift.m4a", QuestId:"IPA 19", Notes:"A small laugh can brighten your day. Joy lifts the heart gently."},
+{Sound:"/t/", Sentence:"Try it today, not tomorrow.", KeyWord:"try", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/try.m4a", QuestId:"IPA 8", Notes:"Don’t wait to start something good. The best time is now."},
+{Sound:"/w/", Sentence:"Willpower outweighs weakness in every worthy pursuit.", KeyWord:"willpower", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/willpower.m4a", QuestId:"IPA 22", Notes:"Strong will helps you succeed even when things are hard. Keep going."},
+{Sound:"/w/", Sentence:"Wit beyond measure is our greatest treasure.", KeyWord:"wit", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/witb.m4a", QuestId:"IPA 15", Notes:"Cleverness and insight are priceless. Use your mind wisely and kindly."},
+{Sound:"/j/", Sentence:"Yearn for knowledge, and you shall find your way.", KeyWord:"knowledge", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/yearn.m4a", QuestId:"IPA 21", Notes:"Curiosity guides you. Want to learn, and doors will open."},
+{Sound:"/j/", Sentence:"Yes, you must yearn before you can achieve.", KeyWord:"achieve", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/yes.m4a", QuestId:"IPA 21", Notes:"Desire is the first step to success. Dreams need longing to take shape."},
+{Sound:"/z/", Sentence:"Zeal and zest, when joined, zero in on the heart of life.", KeyWord:"zeal", MP3File:"https://raw.githubusercontent.com/andrewveda/voicequests/main/zeal.m4a", QuestId:"IPA 14", Notes:"Passion and excitement help you live fully. Love what you do and go for it."}
+
+];
+
+// get unique sounds
+sounds = [...new Set(sheetData.map(r=>r.Sound))];
+
+// BEGIN QUIZ
+function beginQuiz(){
+  const nameVal=document.getElementById("nameInput").value.trim();
+  const deptVal=document.getElementById("departmentSelect").value;
+  if(!nameVal || !deptVal){ alert("Please enter your name and select your department!"); return; }
+  playerName=nameVal;
+  playerDepartment=deptVal;
+  document.getElementById("nameForm").style.display="none";
+  document.getElementById("ipa-trainer-container").style.display="block";
+  startTime=Date.now();
+  startTimer();
+  currentSoundIndex=0;
+  loadCurrentSound();
 }
 
-async function startRecording(btn) {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  mediaRecorder = new MediaRecorder(stream);
-  audioChunks = [];
-  const step = btn.closest('.step');
-  mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-  mediaRecorder.start();
-  alert('Recording started...');
+// TIMER
+function startTimer(){ 
+  timerInterval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    timerEl.innerText=`⏳ Time: ${elapsed}s`;
+  },1000);
+}
+function stopTimer(){ clearInterval(timerInterval); }
+
+// LOAD CURRENT SOUND
+function loadCurrentSound(){
+stopTimer();              // Stop any existing timer
+startTime = Date.now();    // Reset start time for this sound
+startTimer();              // Start timer again
+// ---------------------------------------------------------------------
+const soundKey = sounds[currentSoundIndex];
+  ipaSounds = sheetData.filter(r=>r.Sound===soundKey).map(r=>({
+    sentence:r.Sentence, key:r.KeyWord, mp3:r.MP3File, questId:r.QuestId
+  }));
+currentQuestId = ipaSounds[0].questId;
+  similarityScores = Array(ipaSounds.length).fill(0);
+  guessesPerQuestion = Array(ipaSounds.length).fill(0);
+  recordedStatus = Array(ipaSounds.length).fill(false); // new
+  document.getElementById("soundTitle").innerText=`IPA Sound: ${soundKey}`;
+  renderIPABlocks();
+
+  // Disable/Enable buttons
+  document.getElementById("nextBtn").disabled = true;
+  document.getElementById("prevBtn").disabled = currentSoundIndex === 0;
+  
+  // Show finish only on last sound
+  document.getElementById("finishBtn").style.display = (currentSoundIndex === sounds.length-1) ? "inline-block" : "none";
 }
 
-async function stopRecording(btn) {
-  if (!mediaRecorder) return;
-  const step = btn.closest('.step');
-  mediaRecorder.stop();
-  mediaRecorder.onstop = async () => {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audioElement = step.querySelector('audio');
-    audioElement.src = audioUrl;
-
-    const qid = step.dataset.qid;
-    const typedText = answers[`q${qid}`].typedText;
-
-    // Simulate Speech-to-Text transcription (replace with real API)
-    const spokenText = await mockSpeechToText(audioBlob);
-
-    // Calculate similarity
-    const similarity = compareText(spokenText, typedText);
-    const score = Math.round(similarity * 100);
-
-    step.querySelector('.score').innerText = `Voice Accuracy Score: ${score}%`;
-    answers[`q${qid}`].voiceScore = score;
-  };
+// RENDER IPA BLOCKS
+// RENDER IPA BLOCKS (SHOW NOTES INSTEAD OF SENTENCES)
+function renderIPABlocks(){
+  const container = document.getElementById("ipa-container");
+  container.innerHTML="";
+  ipaSounds.forEach((item,index)=>{
+    const block=document.createElement("div");
+    block.className="ipa-block";
+    const note = sheetData.find(r => r.Sentence === item.sentence).Notes || "No note available.";
+    block.innerHTML=`<p><strong>Note ${index+1}:</strong> ${note}</p>
+      <div>
+        <button onclick="playTeacherVoice('${item.mp3}')">🎙️ Listen & Repeat</button>
+        <button onclick="startRecognition(${index})">🎤 Repeat</button>
+        <div class="feedback" id="feedback-${index}"></div>
+      </div><hr>`;
+    container.appendChild(block);
+  });
 }
 
-async function mockSpeechToText(audioBlob) {
-  // For demo, simulate transcription by returning a slightly modified version
-  return "simulated speech version of your answer";
-}
+// NAVIGATION
+function nextSound(){
+  if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; } // 🆕 stop current audio
+  // Send current sound results
+  const totalTime=Math.floor((Date.now()-startTime)/1000);
 
-// Compare text similarity
-function compareText(a, b) {
-  a = a.toLowerCase().trim();
-  b = b.toLowerCase().trim();
-  const longer = a.length > b.length ? a : b;
-  const shorter = a.length > b.length ? b : a;
-  if (longer.length === 0) return 1.0;
-  return (longer.length - editDistance(longer, shorter)) / longer.length;
-}
+  const avgSimilarity=similarityScores.reduce((a,b)=>a+b,0)/similarityScores.length;
+  const percentage=Math.round(avgSimilarity*100);
 
-// Levenshtein distance
-function editDistance(s1, s2) {
-  const dp = Array(s1.length + 1).fill(null).map(() => Array(s2.length + 1).fill(0));
-  for (let i = 0; i <= s1.length; i++) dp[i][0] = i;
-  for (let j = 0; j <= s2.length; j++) dp[0][j] = j;
-  for (let i = 1; i <= s1.length; i++) {
-    for (let j = 1; j <= s2.length; j++) {
-      dp[i][j] = Math.min(
-        dp[i-1][j] + 1,
-        dp[i][j-1] + 1,
-        dp[i-1][j-1] + (s1[i-1] === s2[j-1] ? 0 : 1)
-      );
-    }
-  }
-  return dp[s1.length][s2.length];
-}
-
-async function submitAll() {
-  const studentName = document.getElementById('studentName').value;
-  if (!studentName) return alert('Please enter your name before submitting.');
-
-  const payload = {
-    studentName,
-    questions: Object.values(answers)
-  };
-
-  const res = await fetch('https://script.google.com/macros/s/AKfycbxA0lRkERWFt2cYfmm04IQioaG4-21k5VFF5CFKP30zyVaJXM5_27PL3v8JIZEweK3u/exec', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'application/json' }
+  fetch("https://script.google.com/macros/s/AKfycbxA0lRkERWFt2cYfmm04IQioaG4-21k5VFF5CFKP30zyVaJXM5_27PL3v8JIZEweK3u/exec", {
+    method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name:playerName,
+      correct:percentage,
+      wrong:100-percentage,
+      time:totalTime,
+      department:playerDepartment,
+      questId:currentQuestId
+    })
   });
 
-  const result = await res.json();
-  if (result.status === 'success') {
-    alert('✅ Submission successful!');
-    location.reload();
-  } else {
-    alert('❌ Submission failed.');
+  if(currentSoundIndex < sounds.length-1){
+    currentSoundIndex++;
+    loadCurrentSound();
   }
 }
+  // SKIP SOUND
+function skipSound(){
+  if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; } // 🆕 stop current audio
+  // Mark all sentences as recorded to enable next button logic
+  recordedStatus = Array(ipaSounds.length).fill(true);
+  similarityScores = Array(ipaSounds.length).fill(0); // assume skipped = 0% similarity
+  guessesPerQuestion = Array(ipaSounds.length).fill(0);
+
+  if(currentSoundIndex < sounds.length-1){
+    currentSoundIndex++;
+    loadCurrentSound();
+  } else {
+    finishQuest(); // if last sound, finish quest
+  }
+}
+function prevSound(){
+  if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; } // 🆕 stop current audio
+  if(currentSoundIndex>0){ currentSoundIndex--; loadCurrentSound(); }
+}
+
+// AUDIO
+function playTeacherVoice(mp3){
+  if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; } // 🆕 stop existing audio
+  currentAudio = new Audio(mp3);
+  currentAudio.play();
+}
+
+
+// SPEECH RECOGNITION
+const recognition=new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang="en-GB"; recognition.interimResults=false;
+function startRecognition(index){
+  guessesPerQuestion[index]++;
+  recognition.start();
+  recognition.onresult=(event)=>{
+    const spoken = event.results[0][0].transcript.trim().toLowerCase();
+    checkAnswer(spoken, ipaSounds[index].sentence,index);
+  };
+  recognition.onerror=(event)=>{
+    document.getElementById(`feedback-${index}`).textContent=`⚠️ Error: ${event.error}`;
+  };
+}
+
+// SIMILARITY
+function checkAnswer(spoken,expected,index){
+  const feedback=document.getElementById(`feedback-${index}`);
+  const similarity=compareText(spoken,expected);
+  similarityScores[index]=similarity;
+  recordedStatus[index] = true; // mark as recorded
+  if(similarity>=0.7){ 
+    feedback.textContent=`✅ Correct! (${Math.round(similarity*100)}%)`; 
+    feedback.className="success"; 
+  } else { 
+    feedback.textContent=`❌ Incorrect (${Math.round(similarity*100)}%)`; 
+    feedback.className="fail"; 
+  }
+
+  // Enable Next button if all recorded
+  if(recordedStatus.every(v => v === true) && currentSoundIndex < sounds.length-1){
+    document.getElementById("nextBtn").disabled = false;
+  }
+}
+
+function compareText(a,b){ 
+  const longer=a.length>b.length?a:b; 
+  const shorter=a.length>b.length?b:a; 
+  if(longer.length===0)return 1.0; 
+  return (longer.length-editDistance(longer,shorter))/longer.length;
+}
+function editDistance(s1,s2){ 
+  s1=s1.toLowerCase(); s2=s2.toLowerCase(); 
+  const costs=[]; 
+  for(let i=0;i<=s1.length;i++){ 
+    let lastValue=i; 
+    for(let j=0;j<=s2.length;j++){ 
+      if(i===0) costs[j]=j; 
+      else{ 
+        if(j>0){ 
+          let newValue=costs[j-1]; 
+          if(s1.charAt(i-1)!==s2.charAt(j-1)) 
+            newValue=Math.min(Math.min(newValue,lastValue),costs[j])+1; 
+          costs[j-1]=lastValue; 
+          lastValue=newValue; 
+        } 
+      } 
+    } 
+    if(i>0) costs[s2.length]=lastValue; 
+  } 
+  return costs[s2.length]; 
+}
+
+// FINISH QUEST
+function finishQuest(){
+  if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; } // 🆕 stop current audio
+  stopTimer();
+  const totalTime=Math.floor((Date.now()-startTime)/1000);
+  const avgSimilarity=similarityScores.reduce((a,b)=>a+b,0)/similarityScores.length;
+  const percentage=Math.round(avgSimilarity*100);
+  document.getElementById("ipa-trainer-container").style.display="none";
+  document.getElementById("score-container").style.display="block";
+  document.getElementById("scoreCard").innerHTML=`
+    <p>👤 Player: ${playerName}</p>
+    <p>📊 Average Accuracy: ${percentage}%</p>
+    <p>⏱️ Time Taken: ${totalTime} seconds</p>
+    <p>📝 Guesses per Question: ${guessesPerQuestion.join(", ")}</p>`;
+  
+  // SEND TO SHEET (optional, keep your existing URL)
+  fetch("https://script.google.com/macros/s/AKfycbxA0lRkERWFt2cYfmm04IQioaG4-21k5VFF5CFKP30zyVaJXM5_27PL3v8JIZEweK3u/exec", {
+    method:"POST", mode:"no-cors", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name:playerName, correct:percentage, wrong:100-percentage,
+      time:totalTime, department:playerDepartment,
+      questId:currentQuestId
+    })
+  });
+}
+
+// RESTART
+document.getElementById("restartBtn").onclick=()=>{
+  document.getElementById("score-container").style.display="none";
+  document.getElementById("nameForm").style.display="block";
+  document.getElementById("nameInput").value="";
+  document.getElementById("departmentSelect").value="";
+  similarityScores=[]; guessesPerQuestion=[];
+};
 </script>
+
 
 </body>
 </html>
